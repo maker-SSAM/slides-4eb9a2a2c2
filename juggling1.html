@@ -128,6 +128,7 @@ body.still *{animation:none!important;transition:none!important}
   --cup:#EDE7DA;      /* 종이컵 */
   --tennis:#D4E157;   /* 테니스공 */
   --skin:#E8B796;     /* 손 */
+  --jline:#a1a1a6;    /* 저글러 선 (어두운 면) */
   --warn-hi:#FFD60A;  /* 밝은 면 위 어두운 띠 안의 주의 글자 */
 }
 .jgs{display:block;overflow:visible}
@@ -140,6 +141,7 @@ body.still *{animation:none!important;transition:none!important}
 .step-card .small{color:var(--on-dark-2);margin-top:8px}
 .step-card .ill{display:flex;justify-content:center}
 .note-warn{display:inline-block;margin-top:10px;padding:4px 16px;border-radius:999px;font-size:28px;font-weight:600;background:var(--warn);color:#000}
+.slide[data-tile="light"],.slide[data-tile="parchment"]{--jline:#6e6e73}
 
 </style>
 <script>
@@ -569,6 +571,36 @@ const JG = (() => {
       });
     };
   }
+  /* ── 저글러: 참고 GIF(3-balls-cascade, 138프레임)를 분석해 그대로 옮긴 것 ──
+     · 공 3개는 같은 궤적(PINK)을 46프레임씩 어긋나게 따라간다 (측정 오차 0).
+     · 팔 = 어깨 → 팔꿈치(몸통 옆 허리 높이에 고정) → 손. 아래팔은 팔꿈치에서 "가장 가까운 공" 쪽으로 뻗고,
+       공에 닿으면 손이 곧 공이다(최대 길이 FM). 그래서 공을 쥐면 같이 내려가고, 던지면 공을 따라 올라갔다가 받으러 돌아온다.
+     · 좌표는 GIF(400×450) 기준 → s 배로 키워 무대에 놓는다. */
+  const PINK = [[165,71],[162,71],[158,73],[155,75],[151,78],[147,82],[144,87],[140,92],[137,99],[133,106],[129,114],[126,124],[122,134],[119,144],[115,156],[111,169],[108,182],[104,197],[101,212],[97,228],[93,245],[90,263],[86,281],[83,301],[81,311],[80,321],[80,331],[81,340],[83,349],[84,357],[87,365],[90,371],[93,377],[97,382],[100,386],[105,388],[109,390],[114,389],[118,387],[123,384],[128,378],[132,371],[137,361],[141,350],[146,336],[150,320],[154,301],[157,281],[161,263],[164,245],[168,228],[172,212],[175,197],[179,182],[182,169],[186,156],[190,144],[193,134],[197,124],[200,114],[204,106],[208,99],[211,92],[215,87],[219,82],[222,78],[226,75],[229,73],[233,71],[237,71],[240,71],[244,73],[247,75],[251,78],[255,82],[258,87],[262,92],[265,99],[269,106],[273,114],[276,124],[280,134],[283,144],[287,156],[291,169],[294,182],[298,197],[301,212],[305,228],[309,245],[312,263],[316,281],[319,301],[321,311],[322,321],[322,331],[321,340],[319,349],[318,357],[315,365],[312,371],[309,377],[305,382],[302,386],[297,388],[293,390],[288,389],[284,387],[279,384],[274,378],[270,371],[265,361],[261,350],[256,336],[252,320],[248,301],[245,281],[241,263],[238,245],[234,228],[230,212],[227,197],[223,182],[220,169],[216,156],[212,144],[209,134],[205,124],[202,114],[198,106],[194,99],[191,92],[187,87],[183,82],[180,78],[176,75],[173,73],[169,71]];
+  function juggler(g, o = {}) {
+    const { cx = 960, top = 20, s = 1.6, trace = false } = o, N = PINK.length, ox = cx - 200 * s, oy = top;
+    const X = x => ox + x * s, Y = y => oy + y * s, R = 19.4 * s;
+    const SH = { L: [110, 142], R: [291, 142] }, EL = { L: [102, 301], R: [296, 301] }, FM = 92, OFF = [0, 46, 92], COL = ['a', 'b', 'c'];
+    const at = f => { f = ((f % N) + N) % N; const i = Math.floor(f), j = (i + 1) % N, u = f - i; return [PINK[i][0] + (PINK[j][0] - PINK[i][0]) * u, PINK[i][1] + (PINK[j][1] - PINK[i][1]) * u]; };
+    const line = `fill="none" style="stroke:var(--jline)" stroke-width="${3 * s}" stroke-linecap="round" stroke-linejoin="round"`;
+    g.innerHTML =
+      (trace ? `<path class="jtrace" d="M${PINK.map(p => X(p[0]) + ' ' + Y(p[1])).join('L')}Z" fill="none" style="stroke:var(--jline)" opacity=".7" stroke-width="${2.5 * s}" stroke-dasharray="${2 * s} ${9 * s}" stroke-linecap="round"/>` : '') +
+      `<ellipse cx="${X(200)}" cy="${Y(69)}" rx="${38 * s}" ry="${53 * s}" ${line}/>` +
+      `<path d="M${X(110)} ${Y(142)}H${X(291)}L${X(267)} ${Y(320)}H${X(133)}Z" ${line}/>` +
+      `<polyline class="jarm-l" ${line}/><polyline class="jarm-r" ${line}/>` +
+      COL.map(k => `<circle class="jgb" r="${R}" style="fill:var(--ball-${k})"/>`).join('');
+    const bs = [...g.querySelectorAll('.jgb')], arm = { L: g.querySelector('.jarm-l'), R: g.querySelector('.jarm-r') };
+    return function draw(f) {
+      const P = OFF.map(o => at(f + o));
+      bs.forEach((b, i) => { b.setAttribute('cx', X(P[i][0])); b.setAttribute('cy', Y(P[i][1])); });
+      for (const side of ['L', 'R']) {
+        const e = EL[side]; let best = null, bd = 1e9;
+        P.forEach(p => { const d = Math.hypot(p[0] - e[0], p[1] - e[1]); if (d < bd) { bd = d; best = p; } });
+        const k = Math.min(FM, bd) / bd, tip = [e[0] + (best[0] - e[0]) * k, e[1] + (best[1] - e[1]) * k], sh = SH[side];
+        arm[side].setAttribute('points', `${X(sh[0])},${Y(sh[1])} ${X(e[0])},${Y(e[1])} ${X(tip[0])},${Y(tip[1])}`);
+      }
+    };
+  }
   const guide = (cx, y0, outer, inner, H) =>
     `<path d="M${cx + outer} ${y0}Q${cx + (outer - inner) / 2} ${y0 - 2 * H} ${cx - inner} ${y0}" fill="none" stroke="#a1a1a6" stroke-width="4" stroke-dasharray="4 12" stroke-linecap="round"/>` +
     `<path d="M${cx - outer} ${y0}Q${cx - (outer - inner) / 2} ${y0 - 2 * H} ${cx + inner} ${y0}" fill="none" stroke="#a1a1a6" stroke-width="4" stroke-dasharray="4 12" stroke-linecap="round"/>`;
@@ -580,7 +612,7 @@ const JG = (() => {
       el.innerHTML = f({ base: el.dataset.base || 'bag' });
     });
   }
-  return { arts, fill, cascade, guide, hand };
+  return { arts, fill, cascade, juggler, guide, hand };
 })();
 
 </script>
@@ -590,32 +622,26 @@ const JG = (() => {
   <div id="stage">
 <!-- ── s01_cover.html ── -->
 <section class="slide" id="s01_cover" data-tile="black" data-title="표지 · 저글링 볼 만들기"
-  data-notes="(표지) 화면을 보세요. 공 세 개가 두 손 사이를 번갈아 오가며 날고 있죠? 이것이 우리가 4차시 동안 배울 '3볼 캐스케이드'입니다. 오늘 1차시는 연습의 첫걸음, 저글링 볼을 직접 만드는 시간이에요. 발문: '저글링을 해 본 적 있나요? 공 몇 개까지 해 봤어요?'">
+  data-notes="(표지) 화면을 보세요. 사람이 공 세 개를 두 손으로 번갈아 던지고 받고 있죠? 공을 쥐면 팔이 공과 함께 내려가고, 던지면 손이 공을 따라 올라갔다가 다음 공을 받으러 돌아옵니다. 이것이 우리가 4차시 동안 배울 '3볼 캐스케이드'입니다. 오늘 1차시는 연습의 첫걸음, 저글링 볼을 직접 만드는 시간이에요. 발문: '저글링을 해 본 적 있나요? 공 몇 개까지 해 봤어요?'">
   <svg class="fullsvg" viewBox="0 0 1920 1080">
-    <g id="s01-guide"></g>
-    <g id="s01-hands"></g>
-    <g id="s01-balls"></g>
+    <g id="s01-juggler"></g>
   </svg>
   <div class="abs center rise" style="left:0;width:1920px;top:718px;--d:.2s"><span class="eyebrow">저글링 배우기 · 1차시</span></div>
   <div class="abs center h1 rise" style="left:0;width:1920px;top:764px;--d:.4s">저글링 볼 만들기</div>
   <div class="abs center lead rise" style="left:0;width:1920px;top:922px;--d:.7s">내 손으로 만든 공 3개로 시작해요</div>
 </section>
 <style>
-#s01_cover .jgb{filter:drop-shadow(0 0 18px rgba(255,255,255,.35))}
+#s01_cover .jgb{filter:drop-shadow(0 0 14px rgba(255,255,255,.3))}
 </style>
 <script>
 (function () {
-  const O = { cx: 960, y0: 560, outer: 250, inner: 100, H: 330, r: 40 };
   Deck.scene('s01_cover', {
     steps: 0,
     build(root) {
-      root.querySelector('#s01-guide').innerHTML = JG.guide(O.cx, O.y0, O.outer, O.inner, O.H).replace(/#a1a1a6/g, '#48484a');
-      const h = x => `<path d="M${x - 70} ${O.y0 + 40}H${x + 70}Q${x + 70} ${O.y0 + 110} ${x} ${O.y0 + 110}Q${x - 70} ${O.y0 + 110} ${x - 70} ${O.y0 + 40}Z" style="fill:var(--skin)"/>`;
-      root.querySelector('#s01-hands').innerHTML = h(O.cx - O.outer) + h(O.cx + O.outer);
-      root._draw = JG.cascade(root.querySelector('#s01-balls'), O);
-      root._draw(0.8);
+      root._draw = JG.juggler(root.querySelector('#s01-juggler'), { cx: 960, top: 20, s: 1.6 });
+      root._draw(8);
     },
-    enter(c) { const d = c.root._draw; c.loop(t => d(0.8 + t / 560)); }
+    enter(c) { const d = c.root._draw; c.loop(t => d(8 + t / 34)); }   /* 34ms = GIF 한 프레임 */
   });
 })();
 </script>
@@ -657,7 +683,7 @@ const JG = (() => {
 
   <svg class="fullsvg" viewBox="0 0 1920 1080">
     <rect x="1060" y="300" width="760" height="660" rx="28" style="fill:var(--c-parchment)"/>
-    <g id="s03-hands"></g><g id="s03-balls"></g>
+    <g id="s03-juggler"></g>
   </svg>
   <div class="card" data-s="1" style="left:100px;top:300px;width:900px;height:200px;padding:34px 44px">
     <div class="h3">물건을 번갈아 던지고 받는 기술</div>
@@ -670,18 +696,11 @@ const JG = (() => {
     <div class="body" style="color:var(--ink-2);margin-top:10px">눈과 손이 함께 움직이는 연습이에요</div></div>
 </section>
 <script>
-(function () {
-  const O = { cx: 1440, y0: 760, outer: 230, inner: 90, H: 330, r: 38 };
-  Deck.scene('s03_what', {
-    steps: 3,
-    build(root) {
-      const h = x => `<path d="M${x - 66} ${O.y0 + 40}H${x + 66}Q${x + 66} ${O.y0 + 104} ${x} ${O.y0 + 104}Q${x - 66} ${O.y0 + 104} ${x - 66} ${O.y0 + 40}Z" style="fill:var(--skin)"/>`;
-      root.querySelector('#s03-hands').innerHTML = JG.guide(O.cx, O.y0, O.outer, O.inner, O.H) + h(O.cx - O.outer) + h(O.cx + O.outer);
-      root._draw = JG.cascade(root.querySelector('#s03-balls'), O); root._draw(1.0);
-    },
-    enter(c) { const d = c.root._draw; c.loop(t => d(1.0 + t / 640)); }
-  });
-})();
+Deck.scene('s03_what', {
+  steps: 3,
+  build(root) { root._draw = JG.juggler(root.querySelector('#s03-juggler'), { cx: 1440, top: 310, s: 1.4 }); root._draw(8); },
+  enter(c) { const d = c.root._draw; c.loop(t => d(8 + t / 34)); }
+});
 </script>
 
 <!-- ── s04_cascade.html ── -->
@@ -691,8 +710,7 @@ const JG = (() => {
   <div class="abs h2" style="left:100px;top:122px"><span class="hl-action">3볼</span> 캐스케이드</div>
 
   <svg class="fullsvg" viewBox="0 0 1920 1080">
-    <g id="s04-guide" class="guide"></g>
-    <g id="s04-hands"></g><g id="s04-balls"></g>
+    <g id="s04-juggler"></g>
   </svg>
   <div class="card" data-s="1" style="left:1280px;top:300px;width:540px;height:200px;padding:30px 34px">
     <div style="display:flex;gap:20px"><span class="num">1</span><div><div class="h3" style="font-size:38px">공 3개 · 손 2개</div><div class="small" style="color:var(--on-dark-2)">한 손에 2개, 다른 손에 1개로 시작</div></div></div></div>
@@ -702,23 +720,15 @@ const JG = (() => {
     <div style="display:flex;gap:20px"><span class="num">3</span><div><div class="h3" style="font-size:38px">8자(∞) 모양으로</div><div class="small" style="color:var(--on-dark-2)">공이 서로 교차하며 흘러가요</div></div></div></div>
 </section>
 <style>
-#s04_cascade .guide{opacity:0;transition:opacity .6s}
-#s04_cascade.ge3 .guide{opacity:1}
+#s04_cascade .jtrace{opacity:0;transition:opacity .6s}
+#s04_cascade.ge3 .jtrace{opacity:1}
 </style>
 <script>
-(function () {
-  const O = { cx: 640, y0: 700, outer: 300, inner: 120, H: 400, r: 42 };
-  Deck.scene('s04_cascade', {
-    steps: 3,
-    build(root) {
-      const h = x => `<path d="M${x - 76} ${O.y0 + 40}H${x + 76}Q${x + 76} ${O.y0 + 114} ${x} ${O.y0 + 114}Q${x - 76} ${O.y0 + 114} ${x - 76} ${O.y0 + 40}Z" style="fill:var(--skin)"/>`;
-      root.querySelector('#s04-guide').innerHTML = JG.guide(O.cx, O.y0, O.outer, O.inner, O.H);
-      root.querySelector('#s04-hands').innerHTML = h(O.cx - O.outer) + h(O.cx + O.outer);
-      root._draw = JG.cascade(root.querySelector('#s04-balls'), O); root._draw(1.0);
-    },
-    enter(c) { const d = c.root._draw; c.loop(t => d(1.0 + t / 700)); }
-  });
-})();
+Deck.scene('s04_cascade', {
+  steps: 3,
+  build(root) { root._draw = JG.juggler(root.querySelector('#s04-juggler'), { cx: 660, top: 225, s: 1.75, trace: true }); root._draw(8); },
+  enter(c) { const d = c.root._draw; c.loop(t => d(8 + t / 34)); }
+});
 </script>
 
 <!-- ── s05_conditions.html ── -->
