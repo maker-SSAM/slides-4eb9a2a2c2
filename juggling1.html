@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#000000">
+<title>저글링 1차시 · 저글링 볼 만들기</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   core.css — 강의 덱 공통 스타일 (규칙은 DESIGN.md 참고)
+   무대 1920×1080 · 면 색이 구획 · 액션 블루 하나 · UI 그림자 없음
+   ═══════════════════════════════════════════════════════════════ */
+:root{
+  /* 면 */
+  --c-white:#ffffff; --c-parchment:#f5f5f7; --c-black:#000000; --c-dark:#1d1d1f; --c-graphite:#272729;
+  /* 글자 */
+  --ink:#1d1d1f; --ink-2:#6e6e73; --ink-3:#86868b; --on-dark:#f5f5f7; --on-dark-2:#a1a1a6; --on-dark-3:#6e6e73;
+  --hair:#e0e0e0; --hair-dark:#3a3a3c;
+  /* 행동(강조) — 파랑은 이것 하나 */
+  --action:#0066cc; --action-dark:#2997ff;
+  /* 의미 색 — 어두운 면 기본값(밝은 면에서 아래 규칙이 덮어씀) */
+  --fil:#64D2FF;      /* 필라멘트(플라스틱) */
+  --heat:#FF6A3D;     /* 열 */
+  --ok:#30D158;       /* 성공·장점 */
+  --warn:#FFD60A;     /* 주의 */
+  --metal:#D6B25E;    /* 금속(노즐) */
+  --fil-hi:#64D2FF; --fil-lo:#0077B6; --heat-hi:#FF6A3D; --heat-lo:#C4391B;
+  /* 글꼴 */
+  --font:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"SF Pro Display","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+  /* 움직임 */
+  --ease-out:cubic-bezier(.2,.8,.2,1); --ease-inout:cubic-bezier(.65,0,.35,1); --ease-spring:cubic-bezier(.34,1.56,.64,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#000}
+body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased;word-break:keep-all;overflow-wrap:break-word;
+  -webkit-user-select:none;user-select:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+
+/* ── 무대 ── */
+#viewport{position:fixed;inset:0;overflow:hidden;background:#000}
+#stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;background:#000;contain:layout paint}
+.slide{position:absolute;inset:0;display:none;overflow:hidden;isolation:isolate;font-size:32px;line-height:1.4}
+.slide.is-on{display:block;animation:slide-in .4s var(--ease-out)}
+@keyframes slide-in{from{opacity:0}to{opacity:1}}
+
+/* ── 면(타일): 어두운 면은 그림이 빛나는 무대, 밝은 면은 정의·타이포 ── */
+.slide[data-tile="black"]{background:var(--c-black);color:var(--on-dark)}
+.slide[data-tile="dark"]{background:var(--c-dark);color:var(--on-dark)}
+.slide[data-tile="graphite"]{background:var(--c-graphite);color:var(--on-dark)}
+.slide[data-tile="light"]{background:var(--c-white);color:var(--ink)}
+.slide[data-tile="parchment"]{background:var(--c-parchment);color:var(--ink)}
+.slide[data-tile="light"],.slide[data-tile="parchment"]{--fil:var(--fil-lo);--heat:var(--heat-lo);--ok:#1E8B3E;--warn:#9A7400}
+
+/* ── 글자 (교실 뒷자리 기준: 본문 최소 28px) ── */
+.eyebrow{font-size:30px;font-weight:600;letter-spacing:.02em;color:var(--on-dark-2)}
+.h1{font-size:128px;font-weight:700;letter-spacing:-.025em;line-height:1.1}
+.h2{font-size:76px;font-weight:700;letter-spacing:-.02em;line-height:1.15}
+.h3{font-size:44px;font-weight:700;letter-spacing:-.01em;line-height:1.25}
+.lead{font-size:44px;font-weight:500;line-height:1.35;color:var(--on-dark-2)}
+.body{font-size:32px;line-height:1.45}
+.small{font-size:28px;line-height:1.4}
+.slide[data-tile="light"] .eyebrow,.slide[data-tile="parchment"] .eyebrow,
+.slide[data-tile="light"] .lead,.slide[data-tile="parchment"] .lead{color:var(--ink-2)}
+.hl{color:var(--fil)} .hl-heat{color:var(--heat)} .hl-action{color:var(--action-dark)}
+.slide[data-tile="light"] .hl-action,.slide[data-tile="parchment"] .hl-action{color:var(--action)}
+
+/* ── 배치 도구 ── */
+.abs{position:absolute}
+.fullsvg{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:visible}
+.center{text-align:center}
+
+/* ── 구성요소 ── */
+.card{position:absolute;border-radius:28px;padding:36px 40px;background:var(--c-parchment)}
+.slide[data-tile="dark"] .card,.slide[data-tile="black"] .card{background:var(--c-graphite)}
+.slide[data-tile="graphite"] .card{background:#323235}
+.slide[data-tile="parchment"] .card{background:var(--c-white)}
+.tag{display:inline-block;padding:6px 22px;border-radius:999px;font-size:28px;font-weight:600;background:var(--ink);color:#fff}
+.slide[data-tile="dark"] .tag,.slide[data-tile="black"] .tag{background:var(--on-dark);color:var(--ink)}
+.tag.is-action{background:var(--action);color:#fff}
+.banner{position:absolute;border-radius:28px;background:var(--action);color:#fff;display:flex;align-items:center;justify-content:center;
+  font-size:48px;font-weight:700;letter-spacing:-.01em}
+.num{display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:50%;
+  background:var(--action-dark);color:#000;font-size:30px;font-weight:700;flex:none}
+.svg-label{font-family:var(--font);font-size:30px;font-weight:600;fill:var(--on-dark)}
+.svg-note{font-family:var(--font);font-size:28px;font-weight:500;fill:var(--on-dark-2)}
+.leader{stroke:var(--on-dark-3);stroke-width:2;fill:none}
+
+/* ── 등장 단계: data-s="n" 인 요소는 n번째 클릭에 나타남 ── */
+[data-s]{opacity:0;transform:translateY(28px);transition:opacity .6s var(--ease-out),transform .7s var(--ease-out)}
+[data-s].on{opacity:1;transform:none}
+svg [data-s]{transform:none}              /* SVG 안은 이동 없이 페이드만 */
+.rise{animation:rise .9s var(--ease-out) both;animation-delay:var(--d,0s)}
+@keyframes rise{from{opacity:0;transform:translateY(36px)}to{opacity:1;transform:none}}
+.slide:not(.is-on) .rise{animation:none}
+/* 되돌아가기·건너뛰기는 전환 없이 즉시 */
+.slide.instant,.slide.instant *{transition:none!important}
+
+/* ── 조작 화면(HUD) ── */
+#hud{position:fixed;right:18px;bottom:12px;font:600 15px/1 var(--font);color:#fff;opacity:.35;pointer-events:none;z-index:50}
+#bar{position:fixed;left:0;bottom:0;height:3px;background:var(--action-dark);width:0;z-index:50;transition:width .3s var(--ease-out)}
+#notes{position:fixed;left:0;right:0;bottom:0;max-height:36vh;overflow:auto;padding:22px 32px 30px;background:rgba(20,20,22,.94);color:#f5f5f7;
+  font:500 22px/1.55 var(--font);display:none;z-index:60;-webkit-user-select:text;user-select:text}
+#notes.on{display:block}
+#overview,#help{position:fixed;inset:0;background:rgba(0,0,0,.92);color:#f5f5f7;font-family:var(--font);display:none;z-index:70;overflow:auto;padding:48px}
+#overview.on{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;align-content:start}
+#overview button{padding:22px;border-radius:16px;background:#2c2c2e;text-align:left;font-size:18px;line-height:1.4;color:#f5f5f7}
+#overview button b{display:block;font-size:34px;margin-bottom:6px;color:#2997ff}
+#overview button.cur{outline:3px solid #2997ff}
+#help.on{display:block}
+#help h3{font-size:30px;margin-bottom:18px}
+#help dl{display:grid;grid-template-columns:200px 1fr;gap:10px 20px;font-size:20px}
+#help dt{color:#2997ff;font-weight:700}
+#blank{position:fixed;inset:0;z-index:80;display:none}
+#blank.b{display:block;background:#000} #blank.w{display:block;background:#fff}
+
+/* ?still=1 : 모든 애니메이션 정지(인쇄·캡처용) */
+body.still *{animation:none!important;transition:none!important}
+
+/* juggling1 전용 의미 색 (DESIGN.md §3 표에도 적혀 있음) */
+:root{
+  --ball-a:#FF5C8A;   /* 공 1 · 풍선 첫 겹 */
+  --ball-b:#A78BFA;   /* 공 2 · 풍선 둘째 겹 */
+  --ball-c:#FFA64D;   /* 공 3 · 풍선 셋째 겹 */
+  --rice:#F2E6C9;     /* 쌀(공 속) */
+  --cup:#EDE7DA;      /* 종이컵 */
+  --tennis:#D4E157;   /* 테니스공 */
+  --skin:#E8B796;     /* 손 */
+  --warn-hi:#FFD60A;  /* 밝은 면 위 어두운 띠 안의 주의 글자 */
+}
+.jgs{display:block;overflow:visible}
+.jgs .t{font-family:var(--font);font-weight:700}
+.step-card{position:absolute;border-radius:28px;padding:30px 30px 26px}
+.slide[data-tile="dark"] .step-card,.slide[data-tile="black"] .step-card{background:var(--c-graphite)}
+.slide[data-tile="graphite"] .step-card{background:#323235}
+.step-card .row{display:flex;align-items:center;gap:18px;margin-top:10px}
+.step-card .row .h3{font-size:38px}
+.step-card .small{color:var(--on-dark-2);margin-top:8px}
+.step-card .ill{display:flex;justify-content:center}
+.note-warn{display:inline-block;margin-top:10px;padding:4px 16px;border-radius:999px;font-size:28px;font-weight:600;background:var(--warn);color:#000}
+
+</style>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   core.js — 강의 덱 엔진
+   · 1920×1080 무대를 화면에 맞춰 배율(레터박스)
+   · 장면(scene) = 도입(enter, 저절로) + 빌드 단계(클릭마다 한 단계)
+   · 모든 모습은 "단계 k 의 함수"다. 되돌아가기·건너뛰기는 k 로 즉시 그려서 언제나 같은 모습
+   · 애니메이션 도구(ctx)는 장면을 떠나면 저절로 정리됨
+   ───────────────────────────────────────────────────────────────
+   Deck.scene(id, {
+     steps?,            // 클릭 단계 수 (생략하면 data-s 의 최댓값)
+     build(root),       // 처음 보일 때 한 번: SVG/DOM 조립
+     enter(ctx),        // 장면에 들어올 때마다: 반복 애니메이션 시작 (ctx.loop 등)
+     go(k, ctx, instant)// 단계 k 가 되었을 때(앞·뒤 모두): k 에 맞게 그리기
+   })
+   · HTML 쪽: data-s="n" → n단계에 나타남 / 슬라이드에 클래스 ge1..geN → 단계 ≥ n 이면 붙음
+   ═══════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+  const SW = 1920, SH = 1080, MAXSTEP = 12;
+  const Q = new URLSearchParams(location.search);
+  const STILL = Q.get('still') === '1';
+  const defs = {}, ctxs = {};
+  let slides = [], cur = -1, step = 0, buf = '';
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => [...(r || document).querySelectorAll(s)];
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  function makeCtx(root) {
+    const loops = new Set(), timers = new Set(); let dead = false;
+    return {
+      root, state: {},
+      $: s => root.querySelector(s), $$: s => [...root.querySelectorAll(s)],
+      /** 매 프레임 fn(경과ms) 호출. 반환값을 부르면 멈춤 */
+      loop(fn) {
+        let on = true, id; const t0 = performance.now();
+        const tick = n => { if (!on || dead) return; fn(n - t0); id = requestAnimationFrame(tick); };
+        id = requestAnimationFrame(tick);
+        const stop = () => { on = false; cancelAnimationFrame(id); loops.delete(stop); };
+        loops.add(stop); return stop;
+      },
+      after(fn, ms) { const id = setTimeout(fn, ms); timers.add(id); return id; },
+      dispose() { dead = true; loops.forEach(s => s()); timers.forEach(clearTimeout); }
+    };
+  }
+
+  function maxStep(el) {
+    const d = defs[el.id];
+    if (d && typeof d.steps === 'number') return d.steps;
+    return $$('[data-s]', el).reduce((m, n) => Math.max(m, +n.dataset.s || 0), 0);
+  }
+
+  function apply(el, k, instant) {
+    const d = defs[el.id] || {};
+    if (instant) el.classList.add('instant');
+    $$('[data-s]', el).forEach(n => n.classList.toggle('on', +n.dataset.s <= k));
+    for (let n = 1; n <= MAXSTEP; n++) el.classList.toggle('ge' + n, n <= k);
+    el.dataset.step = k;
+    if (d.go) d.go(k, ctxs[el.id], !!instant);
+    if (instant) { void el.offsetWidth; setTimeout(() => el.classList.remove('instant'), 80); }
+    hud();
+  }
+
+  function show(i, k, instant) {
+    i = clamp(i, 0, slides.length - 1);
+    const el = slides[i], d = defs[el.id] || {};
+    const max = maxStep(el);
+    if (STILL) { k = max; instant = true; }
+    k = clamp(k, 0, max);
+    if (i !== cur) {
+      if (cur >= 0) {
+        const old = slides[cur];
+        if (ctxs[old.id]) ctxs[old.id].dispose();
+        old.classList.remove('is-on');
+      }
+      cur = i;
+      el.classList.add('is-on');
+      if (!el._built) { if (d.build) d.build(el); el._built = true; }
+      ctxs[el.id] = makeCtx(el);
+      if (d.enter) d.enter(ctxs[el.id]);
+      history.replaceState(null, '', '#' + (i + 1));
+      renderNotes();
+    }
+    step = k;
+    apply(el, k, instant);
+  }
+
+  function next() {
+    const el = slides[cur];
+    if (step < maxStep(el)) show(cur, step + 1);
+    else if (cur < slides.length - 1) show(cur + 1, 0);
+  }
+  function prev() {
+    if (step > 0) show(cur, step - 1);
+    else if (cur > 0) show(cur - 1, 999, true);
+  }
+  const go = n => show(n - 1, 0);
+
+  function fit() {
+    const s = Math.min(innerWidth / SW, innerHeight / SH);
+    $('#stage').style.transform = 'scale(' + s + ') translate(' + (-SW / 2) + 'px,' + (-SH / 2) + 'px)';
+  }
+  function hud() {
+    $('#hud').textContent = (cur + 1) + ' / ' + slides.length;
+    const el = slides[cur], m = maxStep(el) || 1;
+    $('#bar').style.width = ((cur + (maxStep(el) ? step / m : 1) * 0.999) / slides.length * 100) + '%';
+  }
+  function renderNotes() {
+    $('#notes').textContent = slides[cur].dataset.notes || '(이 장에는 대본이 없습니다)';
+  }
+  function toggle(id) {
+    const n = $(id); const on = !n.classList.contains('on');
+    $$('#overview,#help').forEach(x => { if (x !== n) x.classList.remove('on'); });
+    n.classList.toggle('on', on);
+    return on;
+  }
+  function buildOverview() {
+    const ov = $('#overview');
+    ov.innerHTML = slides.map((s, i) =>
+      '<button data-i="' + i + '"><b>' + (i + 1) + '</b>' + (s.dataset.title || s.id) + '</button>').join('');
+    ov.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      ov.classList.remove('on'); go(+b.dataset.i + 1);
+    });
+  }
+  function markCur() { $$('#overview button').forEach(b => b.classList.toggle('cur', +b.dataset.i === cur)); }
+
+  function keys(e) {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const k = e.key;
+    if (/^[0-9]$/.test(k)) { buf += k; return; }
+    if (k === 'Enter' && buf) { go(+buf); buf = ''; return; }
+    buf = '';
+    if (k === 'ArrowRight' || k === ' ' || k === 'PageDown' || k === 'Enter') { e.preventDefault(); next(); }
+    else if (k === 'ArrowLeft' || k === 'PageUp' || k === 'Backspace') { e.preventDefault(); prev(); }
+    else if (k === 'Home') go(1);
+    else if (k === 'End') go(slides.length);
+    else if (k === 'n' || k === 'N') $('#notes').classList.toggle('on');
+    else if (k === 'o' || k === 'O') { markCur(); toggle('#overview'); }
+    else if (k === 'h' || k === 'H' || k === '?') toggle('#help');
+    else if (k === 'f' || k === 'F') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
+    else if (k === 'b' || k === 'B') $('#blank').className = $('#blank').className === 'b' ? '' : 'b';
+    else if (k === 'w' || k === 'W') $('#blank').className = $('#blank').className === 'w' ? '' : 'w';
+    else if (k === 'r' || k === 'R') { const s = step; show(cur, 0, true); setTimeout(() => show(cur, s), 120); }
+    else if (k === 'Escape') { $$('#overview,#help').forEach(x => x.classList.remove('on')); $('#blank').className = ''; }
+  }
+
+  window.Deck = {
+    scene(id, def) { defs[id] = def; },
+    next, prev, go,
+    start() {
+      slides = $$('#stage > .slide');
+      if (STILL) document.body.classList.add('still');
+      fit(); addEventListener('resize', fit);
+      buildOverview();
+      addEventListener('keydown', keys);
+      /* 클릭 = 다음, 오른쪽 클릭 = 이전 */
+      $('#viewport').addEventListener('click', e => { if (!e.target.closest('#notes,#overview,#help')) next(); });
+      $('#viewport').addEventListener('contextmenu', e => { e.preventDefault(); prev(); });
+      /* 전자칠판 좌우 밀기 */
+      let tx = 0, ty = 0;
+      addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+      addEventListener('touchend', e => {
+        const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+        if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) { dx < 0 ? next() : prev(); }
+      }, { passive: true });
+      addEventListener('hashchange', () => { const n = +location.hash.slice(1); if (n && n - 1 !== cur) go(n); });
+      show(clamp((+location.hash.slice(1) || 1) - 1, 0, slides.length - 1), 0);
+    }
+  };
+})();
+
+</script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   objects.js — 오브젝트(OBJ) 라이브러리 · 공용 효과(FX)
+   규약:
+   · OBJ.def(name, {box:[w,h], svg(o)}) — svg(o) 는 문자열. 좌표는 (0,0)~box 안(조금 넘어도 됨)
+   · 그라데이션·필터 id 는 `${o.id}-무엇` 으로 (같은 오브젝트가 여러 장에 나와도 안 겹치게)
+   · 움직이는 부품에는 class="p-부품" 을 붙인다 → 장면 CSS/JS 에서 이 이름으로 잡음
+   · 색은 var(--fil) 같은 의미 색 변수만 쓴다 (밝은 면/어두운 면에서 자동 전환)
+   · 쓰는 법: OBJ.place('hotend', {id, x, y, s})  → <g transform=...> 문자열
+   ═══════════════════════════════════════════════════════════════ */
+window.OBJ = (function () {
+  const reg = {}; let n = 0;
+  return {
+    def(name, d) { reg[name] = d; },
+    box(name) { return reg[name].box; },
+    place(name, o) {
+      o = o || {}; const d = reg[name];
+      if (!d) throw new Error('OBJ 없음: ' + name);
+      const id = o.id || (name + '-' + (++n));
+      return '<g class="o-' + name + '" id="' + id + '" transform="translate(' + (o.x || 0) + ' ' + (o.y || 0) +
+        ') scale(' + (o.s == null ? 1 : o.s) + ')">' + d.svg(Object.assign({}, o, { id })) + '</g>';
+    }
+  };
+})();
+
+/* ── 핫엔드(노즐 조립체). 노즐 끝 = (60,170). 필라멘트 굵은 선이 위로 들어옴 ── */
+OBJ.def('hotend', {
+  box: [120, 170],
+  svg(o) {
+    const fil = o.fil || 70;
+    return `
+      <rect class="p-fil" x="55" y="${-fil}" width="10" height="${fil + 60}" rx="5" style="fill:var(--fil)"/>
+      <rect x="28" y="0" width="64" height="46" rx="8" fill="#48484a"/>
+      <path d="M34 12H86M34 24H86M34 36H86" stroke="#2c2c2e" stroke-width="3" stroke-linecap="round"/>
+      <rect class="p-heater" x="16" y="46" width="88" height="62" rx="10" style="fill:var(--heater,#5a5a5e);transition:fill .8s"/>
+      <path d="M40 108H80L66 170H54Z" style="fill:var(--metal)"/>
+      <path d="M54 170H66" stroke="#fff" stroke-opacity=".5" stroke-width="3" stroke-linecap="round"/>`;
+  }
+});
+
+/* ── 필라멘트 스풀. 중심 (100,100). 돌아가면 구멍 3개가 보임(class p-spool) ── */
+OBJ.def('spool', {
+  box: [200, 200],
+  svg(o) {
+    const holes = [0, 120, 240].map(a => {
+      const r = a * Math.PI / 180; return `<circle cx="${100 + 58 * Math.sin(r)}" cy="${100 - 58 * Math.cos(r)}" r="11" fill="#1d1d1f"/>`;
+    }).join('');
+    return `<g class="p-spool" style="transform-box:fill-box;transform-origin:center">
+      <circle cx="100" cy="100" r="96" fill="#2c2c2e"/>
+      <circle cx="100" cy="100" r="84" style="fill:var(--fil)"/>
+      <circle cx="100" cy="100" r="70" fill="none" stroke="#000" stroke-opacity=".16" stroke-width="3"/>
+      <circle cx="100" cy="100" r="54" fill="none" stroke="#000" stroke-opacity=".16" stroke-width="3"/>
+      <circle cx="100" cy="100" r="38" fill="#2c2c2e"/>
+      ${holes.replace(/r="11"/g, 'r="9"')}
+      <circle cx="100" cy="100" r="12" fill="#6e6e73"/></g>`;
+  }
+});
+
+/* ── 출력판(베드). 윗면 중심이 (0,0). 좌우 ±260 ── */
+OBJ.def('bed', {
+  box: [520, 22],
+  svg() {
+    return `<rect x="-260" y="0" width="520" height="22" rx="6" fill="#3a3a3c"/>
+      <rect x="-260" y="0" width="520" height="4" rx="2" fill="#6e6e73"/>`;
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   FX — 공용 효과
+   FX.printLoop(ctx, o)  3D 프린터가 한 층씩 쌓는 모습(노즐 고정, 베드가 좌우·아래로 움직임)
+     o.bed      베드 그룹(<g>) — 안에 베드와 층(rect)이 들어 있음. 좌표 원점 = 베드 윗면 중심
+     o.layers   층 rect 배열(아래층부터). 각 rect 는 베드 좌표계에서 y = -(j+1)*h
+     o.tipX/tipY 노즐 끝의 화면 좌표        o.h 한 층 두께(px)
+     o.wAt(j)   j번째 층의 너비            o.per 한 층 걸리는 시간(ms)   o.hold 다 쌓고 멈춤(ms)
+     o.glow     (선택) 노즐 끝 불빛 요소 — 쌓는 동안 깜박임
+   반환: stop() — 호출하면 멈추고 빈 베드로 되돌림
+   ═══════════════════════════════════════════════════════════════ */
+window.FX = {
+  printReset(o) {
+    o.layers.forEach(r => { r.setAttribute('width', 0); r.setAttribute('x', 0); });
+    o.bed.setAttribute('transform', 'translate(' + o.tipX + ' ' + o.tipY + ')');
+    o.bed.style.opacity = 1;
+  },
+  printLoop(ctx, o) {
+    const N = o.layers.length, cyc = N * o.per + o.hold, FADE = 500;
+    const sm = x => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
+    const stopLoop = ctx.loop(t => {
+      const tt = t % cyc, p = Math.min(tt / o.per, N);
+      const L = Math.min(Math.floor(p), N - 1), f = p >= N ? 1 : p - L;
+      o.layers.forEach((r, j) => {
+        const w = o.wAt(j);
+        if (j < L || (j === L && f >= 1)) { r.setAttribute('x', -w / 2); r.setAttribute('width', w); }
+        else if (j === L) {
+          r.setAttribute('width', w * f);
+          r.setAttribute('x', L % 2 === 0 ? -w / 2 : w / 2 - w * f);
+        } else { r.setAttribute('width', 0); }
+      });
+      const w = o.wAt(L);
+      const xloc = f >= 1 ? 0 : (L % 2 === 0 ? -w / 2 + w * f : w / 2 - w * f);
+      o.bed.setAttribute('transform', 'translate(' + (o.tipX - xloc) + ' ' + (o.tipY + o.h * (L + sm(f / 0.15))) + ')');
+      o.bed.style.opacity = tt > cyc - FADE ? Math.max(0, (cyc - tt) / FADE) : 1;
+      if (o.glow) o.glow.style.opacity = p >= N ? 0.25 : 0.7 + 0.3 * Math.sin(t / 60);
+    });
+    const stop = () => { stopLoop(); FX.printReset(o); if (o.glow) o.glow.style.opacity = 0; };
+    return stop;
+  }
+};
+
+/* ── 파라메트릭 꽃병 ── FX.vase(h,R,amp,cnt) → {body, rim, rx, ry}  (원점 = 윗면 중심, 아래로 h)
+   h 높이(px) · R 최대 반지름 · amp 물결 크기(0~1) · cnt 물결 개수. body 는 <path d>, rim 은 윗면 타원의 rx/ry */
+FX.vase = function (h, R, amp, cnt) {
+  const N = 48, r = t => R * (0.3 + 0.7 * Math.sin(Math.PI * (0.08 + 0.84 * Math.pow(t, 0.8)))) *
+    (1 + amp * 0.12 * Math.sin(t * cnt * 2 * Math.PI));
+  const L = [], Rt = [];
+  for (let i = 0; i <= N; i++) { const t = i / N, y = (t * h).toFixed(1), x = r(t); L.push((-x).toFixed(1) + ' ' + y); Rt.push(x.toFixed(1) + ' ' + y); }
+  const rb = r(1), rt = r(0);
+  const d = 'M' + L.join('L') + 'A' + rb.toFixed(1) + ' ' + (rb * 0.25).toFixed(1) + ' 0 0 0 ' + Rt[N] + 'L' + Rt.reverse().join('L') + 'Z';
+  return { body: d, rx: rt, ry: rt * 0.25 };
+};
+
+/* juggling1 전용 도구 — JG: 일러스트(SVG 문자열) + 캐스케이드 애니메이션
+   · 장면 HTML 에서 <svg class="jgs" viewBox="0 0 320 260" data-jg="이름" data-base="tennis"></svg> 로 쓰고,
+     장면의 build(root) 에서 JG.fill(root) 을 부르면 그림이 채워진다.
+   · 모든 그림은 320×260 상자 기준. 이미지 파일 없음 → 파일 하나로 배포. */
+const JG = (() => {
+  const ball = (x, y, r, k = 'a') =>
+    `<circle cx="${x}" cy="${y}" r="${r}" style="fill:var(--ball-${k})"/>` +
+    `<ellipse cx="${x - r * .35}" cy="${y - r * .4}" rx="${r * .3}" ry="${r * .17}" fill="#fff" opacity=".35" transform="rotate(-35 ${x - r * .35} ${y - r * .4})"/>`;
+
+  const tennis = (x, y, r, slit) => `<g transform="translate(${x} ${y}) scale(${r / 70})">
+    <circle r="70" style="fill:var(--tennis)"/>
+    <path d="M-52 -46Q-12 0 -52 46M52 -46Q12 0 52 46" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity=".9"/>
+    ${slit ? '<path d="M0 -66Q22 0 0 66Q-22 0 0 -66Z" fill="#2a2a2c"/><path d="M0 -66Q22 0 0 66" fill="none" stroke="#9aa82e" stroke-width="5"/>' : ''}</g>`;
+
+  const base = (kind, x, y, r) => kind === 'tennis' ? tennis(x, y, r, false) :
+    `<circle cx="${x}" cy="${y}" r="${r}" style="fill:var(--rice)"/>` +
+    `<circle cx="${x}" cy="${y}" r="${r}" fill="#9FD8F0" opacity=".28" stroke="#9FD8F0" stroke-width="4"/>`;
+
+  const nub = (x, y, r, k = 'a') => `<path d="M${x - 15} ${y - r + 10}L${x - 9} ${y - r - 24}Q${x} ${y - r - 36} ${x + 9} ${y - r - 24}L${x + 15} ${y - r + 10}Z" style="fill:var(--ball-${k})"/>
+    <ellipse cx="${x}" cy="${y - r - 28}" rx="13" ry="6" fill="#000" opacity=".18"/>`;
+
+  const covered = (x, y, r, k, withNub) =>
+    `<circle cx="${x}" cy="${y}" r="${r + 5}" style="fill:var(--ball-${k})"/>` +
+    `<ellipse cx="${x - r * .38}" cy="${y - r * .42}" rx="${r * .3}" ry="${r * .17}" fill="#fff" opacity=".35" transform="rotate(-35 ${x - r * .38} ${y - r * .42})"/>` +
+    (withNub ? nub(x, y, r + 5, k) : '');
+
+  const scissors = (x, y, s = 1, rot = 0) => `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${s})">
+    <path d="M0 0L-26 -78M0 0L26 -78" stroke="#d1d1d6" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="-28" cy="52" r="26" fill="none" style="stroke:var(--heat)" stroke-width="10"/>
+    <circle cx="28" cy="52" r="26" fill="none" style="stroke:var(--heat)" stroke-width="10"/>
+    <path d="M-14 22L0 0L14 22" stroke="#d1d1d6" stroke-width="10" stroke-linecap="round" fill="none"/>
+    <circle r="7" fill="#6e6e73"/></g>`;
+
+  const cup = (x, y, s, o = {}) => `<g transform="translate(${x} ${y}) scale(${s})">
+    <path d="M0 0H120L102 148Q101 156 93 156H27Q19 156 18 148Z" style="fill:var(--cup)" stroke="#8e8e93" stroke-width="3"/>
+    ${o.rice ? `<path d="M5.7 47Q60 40 114.3 47L102 148Q101 156 93 156H27Q19 156 18 148Z" style="fill:var(--rice)"/>` +
+      [[40, 80], [62, 100], [84, 76], [52, 126], [78, 120], [96, 98], [30, 112]].map(p => `<ellipse cx="${p[0]}" cy="${p[1]}" rx="5" ry="3" fill="#d6c394" transform="rotate(25 ${p[0]} ${p[1]})"/>`).join('') : ''}
+    <rect x="-5" y="-5" width="130" height="11" rx="5.5" fill="#fff" opacity=".85"/>
+    ${o.line ? `<path d="M-18 47H138" style="stroke:var(--action-dark)" stroke-width="5" stroke-dasharray="10 8" stroke-linecap="round"/>
+      <text class="t" x="146" y="57" style="font-size:30px;fill:var(--action-dark)">70%</text>` : ''}</g>`;
+
+  const bagFull = (x, y, s, knot = true) => `<g transform="translate(${x} ${y}) scale(${s})">
+    <circle r="70" fill="#9FD8F0" opacity=".3" stroke="#9FD8F0" stroke-width="5"/>
+    <circle r="58" style="fill:var(--rice)"/>
+    <ellipse cx="-18" cy="-24" rx="18" ry="9" fill="#fff" opacity=".5" transform="rotate(-35 -18 -24)"/>
+    ${[[-20, 10], [14, 22], [26, -8], [-8, -4], [-30, 34], [8, 40]].map(p => `<ellipse cx="${p[0]}" cy="${p[1]}" rx="6" ry="3.5" fill="#d6c394" transform="rotate(30 ${p[0]} ${p[1]})"/>`).join('')}
+    ${knot ? `<path d="M-14 -66L-20 -96Q0 -112 20 -96L14 -66Z" fill="#9FD8F0" opacity=".7" stroke="#9FD8F0" stroke-width="4"/>
+      <rect x="-18" y="-78" width="36" height="9" rx="4.5" style="fill:var(--heat)"/>` : ''}</g>`;
+
+  const glueGun = (x, y, s = 1, rot = 0) => `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${s})">
+    <path d="M-70 -20H40Q56 -20 56 -4V8Q56 24 40 24H-70Q-86 24 -86 8V-4Q-86 -20 -70 -20Z" fill="#6e6e73"/>
+    <path d="M-30 24L-44 84Q-46 92 -38 92H-12Q-6 92 -6 84L0 24Z" fill="#48484a"/>
+    <path d="M56 -12L96 4L56 20Z" style="fill:var(--metal)"/>
+    <circle cx="96" cy="4" r="6" style="fill:var(--heat)"/>
+    <rect x="-86" y="-8" width="26" height="14" rx="7" style="fill:var(--heat)" opacity=".85"/></g>`;
+
+  const hand = (x, y) => `<path d="M${x - 40} ${y}H${x + 40}Q${x + 40} ${y + 34} ${x} ${y + 34}Q${x - 40} ${y + 34} ${x - 40} ${y}Z" style="fill:var(--skin)"/>`;
+  const arc = (x0, x1, y, H, dash = true) =>
+    `<path d="M${x0} ${y}Q${(x0 + x1) / 2} ${y - 2 * H} ${x1} ${y}" fill="none" stroke="#a1a1a6" stroke-width="4" ${dash ? 'stroke-dasharray="4 12"' : ''} stroke-linecap="round" opacity=".7"/>`;
+
+  /* ── 그림 사전 ── */
+  const arts = {
+    /* 로드맵(차시 아이콘) */
+    n0: () => ball(80, 150, 40, 'a') + ball(160, 150, 40, 'b') + ball(240, 150, 40, 'c'),
+    n1: () => hand(70, 190) + hand(250, 190) + arc(70, 250, 180, 120) + ball(160, 62, 30, 'a'),
+    n2: () => hand(70, 190) + hand(250, 190) + arc(70, 230, 180, 110) + arc(250, 90, 180, 70) + ball(150, 80, 28, 'a') + ball(170, 110, 28, 'b'),
+    n3: () => hand(70, 190) + hand(250, 190) + arc(80, 250, 182, 100) + arc(250, 80, 182, 100) + arc(70, 250, 182, 60, true) +
+      ball(160, 92, 26, 'a') + ball(120, 130, 26, 'b') + ball(215, 132, 26, 'c'),
+
+    /* 좋은 공의 조건 */
+    'c-same': () => ball(56, 130, 34, 'a') + ball(160, 130, 34, 'a') + ball(264, 130, 34, 'a') +
+      '<path d="M101 122H115M101 138H115M205 122H219M205 138H219" stroke="#a1a1a6" stroke-width="6" stroke-linecap="round"/>',
+    'c-tough': () => '<path d="M60 212H260" stroke="#6e6e73" stroke-width="6" stroke-linecap="round"/>' + ball(150, 160, 52, 'a') +
+      '<circle cx="222" cy="84" r="34" style="fill:var(--ok)"/><path d="M205 84L218 98L241 70" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>',
+    'c-heavy': () => '<path d="M70 92H250" stroke="#a1a1a6" stroke-width="8" stroke-linecap="round"/><rect x="154" y="92" width="12" height="112" fill="#a1a1a6"/><rect x="108" y="200" width="104" height="14" rx="7" fill="#6e6e73"/>' +
+      '<path d="M70 92V150M250 92V150" stroke="#a1a1a6" stroke-width="4"/>' +
+      '<path d="M26 150H114Q114 182 70 182Q26 182 26 150ZM206 150H294Q294 182 250 182Q206 182 206 150Z" fill="#6e6e73"/>' + ball(70, 124, 26, 'a') + ball(250, 124, 26, 'a'),
+    'c-still': () => '<path d="M50 206H270" stroke="#6e6e73" stroke-width="6" stroke-linecap="round"/>' + ball(110, 158, 46, 'a') +
+      '<path d="M170 190Q205 60 250 190" fill="none" stroke="#a1a1a6" stroke-width="5" stroke-dasharray="4 12" stroke-linecap="round"/>' +
+      '<circle cx="222" cy="96" r="30" fill="none" style="stroke:var(--heat)" stroke-width="8"/><path d="M201 117L243 75" style="stroke:var(--heat)" stroke-width="8" stroke-linecap="round"/>',
+
+    /* 준비물 */
+    'm-cup': () => cup(95, 40, 1.3),
+    'm-bag': () => '<rect x="96" y="40" width="128" height="176" rx="16" fill="#9FD8F0" opacity=".28" stroke="#9FD8F0" stroke-width="5"/><path d="M96 78H224" stroke="#9FD8F0" stroke-width="5"/><rect x="146" y="66" width="28" height="22" rx="6" style="fill:var(--heat)"/>',
+    'm-rice': () => '<path d="M60 150H260Q252 224 160 224Q68 224 60 150Z" fill="#6e6e73"/><path d="M72 150Q112 70 160 64Q208 70 248 150Z" style="fill:var(--rice)"/>' +
+      [[120, 120], [150, 100], [190, 118], [165, 138], [214, 138], [100, 142], [135, 142]].map(p => `<ellipse cx="${p[0]}" cy="${p[1]}" rx="7" ry="4" fill="#d6c394" transform="rotate(25 ${p[0]} ${p[1]})"/>`).join(''),
+    'm-balloon': () => [[86, 104, 'a'], [160, 86, 'b'], [234, 104, 'c']].map(b =>
+      `<ellipse cx="${b[0]}" cy="${b[1]}" rx="44" ry="56" style="fill:var(--ball-${b[2]})"/><path d="M${b[0] - 8} ${b[1] + 62}L${b[0]} ${b[1] + 52}L${b[0] + 8} ${b[1] + 62}Z" style="fill:var(--ball-${b[2]})"/><ellipse cx="${b[0] - 16}" cy="${b[1] - 24}" rx="9" ry="16" fill="#fff" opacity=".35" transform="rotate(25 ${b[0] - 16} ${b[1] - 24})"/>`).join('') +
+      '<path d="M86 166Q96 200 80 230M160 148Q150 190 166 232M234 166Q222 200 240 230" fill="none" stroke="#a1a1a6" stroke-width="3"/>',
+    'm-scissors': () => scissors(160, 128, 1.1),
+    'm-funnel': () => '<path d="M70 56H250L184 150V214H136V150Z" fill="#8e8e93"/><ellipse cx="160" cy="56" rx="90" ry="14" fill="#a1a1a6"/><ellipse cx="160" cy="56" rx="78" ry="9" fill="#48484a"/>',
+    'm-tennis': () => tennis(92, 152, 52) + tennis(228, 152, 52) + tennis(160, 96, 52),
+    'm-knife': () => '<rect x="56" y="98" width="150" height="64" rx="14" style="fill:var(--warn)"/><path d="M206 108L270 130L206 152Z" fill="#d1d1d6"/><rect x="82" y="118" width="60" height="24" rx="12" fill="#000" opacity=".25"/><circle cx="170" cy="130" r="8" fill="#000" opacity=".3"/>',
+    'm-glue': () => glueGun(150, 116, 1.1),
+
+    /* 만드는 과정 */
+    'v-bag': () => bagFull(160, 140, 1.3),
+    'v-tennis': () => tennis(160, 130, 84, false),
+    'cup-line': () => cup(60, 36, 1.3, { line: true }),
+    'cup-rice': () => cup(60, 62, 1.25, { line: true, rice: true }) +
+      [[96, 18], [118, 40], [84, 44]].map(p => `<ellipse cx="${p[0]}" cy="${p[1]}" rx="7" ry="4" style="fill:var(--rice)" transform="rotate(25 ${p[0]} ${p[1]})"/>`).join(''),
+    'bag-tie': () => bagFull(160, 150, 1.25),
+    'wrap': o => base(o.base, 160, 150, 58) + covered(160, 150, 58, 'a', true),
+    'cut': o => base(o.base, 160, 150, 58) + covered(160, 150, 58, 'a', true) +
+      '<path d="M118 100H202" style="stroke:var(--action-dark)" stroke-width="6" stroke-dasharray="10 9" stroke-linecap="round"/>' + scissors(246, 70, .55, 62),
+    'layers': o => '<circle cx="132" cy="136" r="84" style="fill:var(--ball-c)"/><circle cx="132" cy="136" r="68" style="fill:var(--ball-b)"/><circle cx="132" cy="136" r="52" style="fill:var(--ball-a)"/>' +
+      (o.base === 'tennis' ? tennis(132, 136, 36, false) : '<circle cx="132" cy="136" r="36" style="fill:var(--rice)"/>') +
+      '<path d="M190 82L228 56M200 118L228 118M180 150L228 180" stroke="#a1a1a6" stroke-width="3" fill="none"/>' +
+      '<text class="t" x="232" y="64" style="font-size:30px;fill:var(--ball-c)">3겹</text><text class="t" x="232" y="126" style="font-size:30px;fill:var(--ball-b)">2겹</text><text class="t" x="232" y="190" style="font-size:30px;fill:var(--ball-a)">1겹</text>',
+    'three': o => (o.base === 'tennis' ? '' : '') + covered(70, 140, 40, 'a', false) + covered(160, 140, 40, 'b', false) + covered(250, 140, 40, 'c', false) +
+      '<path d="M44 206H276" stroke="#6e6e73" stroke-width="5" stroke-linecap="round"/>',
+
+    /* 테니스공 버전 전용 */
+    'tennis-cut': () => tennis(160, 130, 78, true) + '<path d="M250 40L194 112" stroke="#d1d1d6" stroke-width="8" stroke-linecap="round"/><path d="M250 40L270 28" stroke="#6e6e73" stroke-width="14" stroke-linecap="round"/>',
+    'funnel-fill': () => tennis(160, 186, 56, true) + '<path d="M104 32H216L178 98V120H142V98Z" fill="#8e8e93"/><ellipse cx="160" cy="32" rx="56" ry="9" fill="#a1a1a6"/>' +
+      [[160, 126], [158, 140], [163, 154]].map(p => `<ellipse cx="${p[0]}" cy="${p[1]}" rx="6" ry="3.5" style="fill:var(--rice)"/>`).join(''),
+    'glue': () => tennis(130, 140, 74, true) + '<path d="M130 78Q150 140 130 202" fill="none" style="stroke:var(--heat)" stroke-width="9" stroke-linecap="round" opacity=".9"/>' + glueGun(236, 78, .62, -22)
+  };
+
+  /* ── 캐스케이드: 공 3개가 손 2개 사이를 번갈아 오가는 모습 ──
+     공 i 는 i, i+3, i+6 … 박자에 던져진다. 던지고(air) → 반대 손에 안쪽으로 받고 → 바깥쪽으로 옮겨 다시 던진다. */
+  function cascade(g, o = {}) {
+    const { cx = 0, y0 = 0, outer = 170, inner = 70, H = 200, r = 34, air = 2.4 } = o;
+    g.innerHTML = ['a', 'b', 'c'].map(k => `<circle class="jgb" r="${r}" style="fill:var(--ball-${k})"/>`).join('');
+    const bs = [...g.querySelectorAll('.jgb')], mod = (a, n) => ((a % n) + n) % n;
+    return function draw(tau) {
+      bs.forEach((b, i) => {
+        const n = Math.floor((tau - i) / 3), u = mod(tau - i, 3), dir = mod(i + 3 * n, 2) === 0 ? 1 : -1;
+        let x, y;
+        if (u < air) { const f = u / air; x = dir * outer + (-dir * inner - dir * outer) * f; y = y0 - H * 4 * f * (1 - f); }
+        else { const q = (u - air) / (3 - air); x = -dir * inner + (-dir * outer + dir * inner) * q; y = y0 + 8 * Math.sin(Math.PI * q); }
+        b.setAttribute('cx', cx + x); b.setAttribute('cy', y);
+      });
+    };
+  }
+  const guide = (cx, y0, outer, inner, H) =>
+    `<path d="M${cx + outer} ${y0}Q${cx + (outer - inner) / 2} ${y0 - 2 * H} ${cx - inner} ${y0}" fill="none" stroke="#a1a1a6" stroke-width="4" stroke-dasharray="4 12" stroke-linecap="round"/>` +
+    `<path d="M${cx - outer} ${y0}Q${cx - (outer - inner) / 2} ${y0 - 2 * H} ${cx + inner} ${y0}" fill="none" stroke="#a1a1a6" stroke-width="4" stroke-dasharray="4 12" stroke-linecap="round"/>`;
+
+  function fill(root) {
+    root.querySelectorAll('[data-jg]').forEach(el => {
+      const f = arts[el.dataset.jg]; if (!f) { console.warn('JG: 없는 그림', el.dataset.jg); return; }
+      el.setAttribute('viewBox', '0 0 320 260');
+      el.innerHTML = f({ base: el.dataset.base || 'bag' });
+    });
+  }
+  return { arts, fill, cascade, guide, hand };
+})();
+
+</script>
+</head>
+<body>
+<div id="viewport">
+  <div id="stage">
+<!-- ── s01_cover.html ── -->
+<section class="slide" id="s01_cover" data-tile="black" data-title="표지 · 저글링 볼 만들기"
+  data-notes="(표지) 화면을 보세요. 공 세 개가 두 손 사이를 번갈아 오가며 날고 있죠? 이것이 우리가 4차시 동안 배울 '3볼 캐스케이드'입니다. 오늘 1차시는 연습의 첫걸음, 저글링 볼을 직접 만드는 시간이에요. 발문: '저글링을 해 본 적 있나요? 공 몇 개까지 해 봤어요?'">
+  <svg class="fullsvg" viewBox="0 0 1920 1080">
+    <g id="s01-guide"></g>
+    <g id="s01-hands"></g>
+    <g id="s01-balls"></g>
+  </svg>
+  <div class="abs center rise" style="left:0;width:1920px;top:718px;--d:.2s"><span class="eyebrow">저글링 배우기 · 1차시</span></div>
+  <div class="abs center h1 rise" style="left:0;width:1920px;top:764px;--d:.4s">저글링 볼 만들기</div>
+  <div class="abs center lead rise" style="left:0;width:1920px;top:922px;--d:.7s">내 손으로 만든 공 3개로 시작해요</div>
+</section>
+<style>
+#s01_cover .jgb{filter:drop-shadow(0 0 18px rgba(255,255,255,.35))}
+</style>
+<script>
+(function () {
+  const O = { cx: 960, y0: 560, outer: 250, inner: 100, H: 330, r: 40 };
+  Deck.scene('s01_cover', {
+    steps: 0,
+    build(root) {
+      root.querySelector('#s01-guide').innerHTML = JG.guide(O.cx, O.y0, O.outer, O.inner, O.H).replace(/#a1a1a6/g, '#48484a');
+      const h = x => `<path d="M${x - 70} ${O.y0 + 40}H${x + 70}Q${x + 70} ${O.y0 + 110} ${x} ${O.y0 + 110}Q${x - 70} ${O.y0 + 110} ${x - 70} ${O.y0 + 40}Z" style="fill:var(--skin)"/>`;
+      root.querySelector('#s01-hands').innerHTML = h(O.cx - O.outer) + h(O.cx + O.outer);
+      root._draw = JG.cascade(root.querySelector('#s01-balls'), O);
+      root._draw(0.8);
+    },
+    enter(c) { const d = c.root._draw; c.loop(t => d(0.8 + t / 560)); }
+  });
+})();
+</script>
+
+<!-- ── s02_roadmap.html ── -->
+<section class="slide" id="s02_roadmap" data-tile="parchment" data-title="4차시 학습 로드맵"
+  data-notes="(1단계) 저글링 수업은 모두 4차시입니다. 오늘은 1차시, 저글링 볼 만들기. (2단계) 2차시는 공 1개로 던지고 받는 연습. (3단계) 3차시는 공 2개. (4단계) 4차시에 공 3개, 3볼 캐스케이드에 도전합니다. 수업 시간과 별도로 연습 시간을 따로 확보한다는 점도 안내해 주세요. 발문: '왜 처음부터 공 3개로 하지 않고 1개, 2개, 3개로 나눌까요?'">
+  <div class="abs eyebrow" style="left:100px;top:84px">저글링 4차시 수업</div>
+  <div class="abs h2" style="left:100px;top:122px">3볼 저글링까지 <span class="hl-action">4걸음</span></div>
+
+  <div class="card" style="left:100px;top:290px;width:410px;height:640px;padding:30px;background:var(--action)">
+    <svg class="jgs" data-jg="n0" style="width:350px;height:284px"></svg>
+    <span class="tag" style="background:#fff;color:var(--action)">오늘 · 1차시</span>
+    <div class="h3" style="margin:14px 0 8px;color:#fff">저글링 볼 만들기</div>
+    <div class="small" style="color:#fff">연습에 쓸 공 3개를 만들어요</div></div>
+  <div class="card" data-s="1" style="left:536px;top:290px;width:410px;height:640px;padding:30px">
+    <svg class="jgs" data-jg="n1" style="width:350px;height:284px"></svg>
+    <span class="tag">2차시</span>
+    <div class="h3" style="margin:14px 0 8px">공 1개로 연습</div>
+    <div class="small" style="color:var(--ink-2)">던지고 받는 높이와 손 모양 익히기</div></div>
+  <div class="card" data-s="2" style="left:972px;top:290px;width:410px;height:640px;padding:30px">
+    <svg class="jgs" data-jg="n2" style="width:350px;height:284px"></svg>
+    <span class="tag">3차시</span>
+    <div class="h3" style="margin:14px 0 8px">공 2개로 연습</div>
+    <div class="small" style="color:var(--ink-2)">두 손이 번갈아 던지는 리듬 만들기</div></div>
+  <div class="card" data-s="3" style="left:1408px;top:290px;width:412px;height:640px;padding:30px">
+    <svg class="jgs" data-jg="n3" style="width:350px;height:284px"></svg>
+    <span class="tag">4차시</span>
+    <div class="h3" style="margin:14px 0 8px">공 3개로 연습</div>
+    <div class="small" style="color:var(--ink-2)">3볼 캐스케이드에 도전!</div></div>
+</section>
+<script>Deck.scene('s02_roadmap', { build(root) { JG.fill(root); } });</script>
+
+<!-- ── s03_what.html ── -->
+<section class="slide" id="s03_what" data-tile="light" data-title="저글링이란?"
+  data-notes="(1단계) 저글링은 물건을 번갈아 공중에 던지고 받는 기술입니다. 공뿐 아니라 곤봉, 고리, 손수건으로도 해요. (2단계) 핵심은 '손보다 물건이 더 많다'는 것. 손이 2개인데 공이 3개니까, 한 손이 던지는 동안 다른 손은 받을 준비를 해야 합니다. (3단계) 연습하면 집중력, 눈과 손의 협응, 리듬감이 좋아져요. 발문: '손은 2개인데 공이 3개라면 한 손에는 공이 몇 개씩 있어야 할까요?'">
+  <div class="abs eyebrow" style="left:100px;top:84px">01 · 저글링이란?</div>
+  <div class="abs h2" style="left:100px;top:122px">던지고 받는 <span class="hl-action">리듬</span></div>
+
+  <svg class="fullsvg" viewBox="0 0 1920 1080">
+    <rect x="1060" y="300" width="760" height="660" rx="28" style="fill:var(--c-parchment)"/>
+    <g id="s03-hands"></g><g id="s03-balls"></g>
+  </svg>
+  <div class="card" data-s="1" style="left:100px;top:300px;width:900px;height:200px;padding:34px 44px">
+    <div class="h3">물건을 번갈아 던지고 받는 기술</div>
+    <div class="body" style="color:var(--ink-2);margin-top:10px">공 · 곤봉 · 고리 · 손수건으로도 해요</div></div>
+  <div class="card" data-s="2" style="left:100px;top:530px;width:900px;height:200px;padding:34px 44px">
+    <div class="h3">손은 2개, 물건은 3개 이상</div>
+    <div class="body" style="color:var(--ink-2);margin-top:10px">한 손이 던지는 동안 다른 손은 받을 준비!</div></div>
+  <div class="card" data-s="3" style="left:100px;top:760px;width:900px;height:200px;padding:34px 44px">
+    <div class="h3">집중력 · 협응력 · 리듬감이 쑥쑥</div>
+    <div class="body" style="color:var(--ink-2);margin-top:10px">눈과 손이 함께 움직이는 연습이에요</div></div>
+</section>
+<script>
+(function () {
+  const O = { cx: 1440, y0: 760, outer: 230, inner: 90, H: 330, r: 38 };
+  Deck.scene('s03_what', {
+    steps: 3,
+    build(root) {
+      const h = x => `<path d="M${x - 66} ${O.y0 + 40}H${x + 66}Q${x + 66} ${O.y0 + 104} ${x} ${O.y0 + 104}Q${x - 66} ${O.y0 + 104} ${x - 66} ${O.y0 + 40}Z" style="fill:var(--skin)"/>`;
+      root.querySelector('#s03-hands').innerHTML = JG.guide(O.cx, O.y0, O.outer, O.inner, O.H) + h(O.cx - O.outer) + h(O.cx + O.outer);
+      root._draw = JG.cascade(root.querySelector('#s03-balls'), O); root._draw(1.0);
+    },
+    enter(c) { const d = c.root._draw; c.loop(t => d(1.0 + t / 640)); }
+  });
+})();
+</script>
+
+<!-- ── s04_cascade.html ── -->
+<section class="slide" id="s04_cascade" data-tile="dark" data-title="3볼 캐스케이드란?"
+  data-notes="(1단계) 지금 움직이는 화면이 3볼 캐스케이드입니다. 공 3개를 두 손으로 번갈아 던져요. (2단계) 오른손이 던지면 다음은 왼손, 또 오른손… 한 번에 한 개씩 번갈아 던집니다. 한 손에 두 개를 쥐고 시작해요. (3단계) 공이 그리는 길을 따라가 보면 숫자 8을 눕힌 모양(∞)이 됩니다. 캐스케이드는 '폭포'라는 뜻이고, 공이 폭포처럼 흘러가는 가장 기본적인 3볼 기술이에요. 이게 우리의 최종 목표입니다. 발문: '공이 서로 부딪히지 않고 어떻게 지나갈까요?'">
+  <div class="abs eyebrow" style="left:100px;top:84px">02 · 우리의 목표</div>
+  <div class="abs h2" style="left:100px;top:122px"><span class="hl-action">3볼</span> 캐스케이드</div>
+
+  <svg class="fullsvg" viewBox="0 0 1920 1080">
+    <g id="s04-guide" class="guide"></g>
+    <g id="s04-hands"></g><g id="s04-balls"></g>
+  </svg>
+  <div class="card" data-s="1" style="left:1280px;top:300px;width:540px;height:200px;padding:30px 34px">
+    <div style="display:flex;gap:20px"><span class="num">1</span><div><div class="h3" style="font-size:38px">공 3개 · 손 2개</div><div class="small" style="color:var(--on-dark-2)">한 손에 2개, 다른 손에 1개로 시작</div></div></div></div>
+  <div class="card" data-s="2" style="left:1280px;top:530px;width:540px;height:200px;padding:30px 34px">
+    <div style="display:flex;gap:20px"><span class="num">2</span><div><div class="h3" style="font-size:38px">번갈아 한 개씩</div><div class="small" style="color:var(--on-dark-2)">오른손 → 왼손 → 오른손 …</div></div></div></div>
+  <div class="card" data-s="3" style="left:1280px;top:760px;width:540px;height:200px;padding:30px 34px">
+    <div style="display:flex;gap:20px"><span class="num">3</span><div><div class="h3" style="font-size:38px">8자(∞) 모양으로</div><div class="small" style="color:var(--on-dark-2)">공이 서로 교차하며 흘러가요</div></div></div></div>
+</section>
+<style>
+#s04_cascade .guide{opacity:0;transition:opacity .6s}
+#s04_cascade.ge3 .guide{opacity:1}
+</style>
+<script>
+(function () {
+  const O = { cx: 640, y0: 700, outer: 300, inner: 120, H: 400, r: 42 };
+  Deck.scene('s04_cascade', {
+    steps: 3,
+    build(root) {
+      const h = x => `<path d="M${x - 76} ${O.y0 + 40}H${x + 76}Q${x + 76} ${O.y0 + 114} ${x} ${O.y0 + 114}Q${x - 76} ${O.y0 + 114} ${x - 76} ${O.y0 + 40}Z" style="fill:var(--skin)"/>`;
+      root.querySelector('#s04-guide').innerHTML = JG.guide(O.cx, O.y0, O.outer, O.inner, O.H);
+      root.querySelector('#s04-hands').innerHTML = h(O.cx - O.outer) + h(O.cx + O.outer);
+      root._draw = JG.cascade(root.querySelector('#s04-balls'), O); root._draw(1.0);
+    },
+    enter(c) { const d = c.root._draw; c.loop(t => d(1.0 + t / 700)); }
+  });
+})();
+</script>
+
+<!-- ── s05_conditions.html ── -->
+<section class="slide" id="s05_conditions" data-tile="parchment" data-title="좋은 저글링 볼의 조건"
+  data-notes="(1단계) 첫째, 같은 모양·같은 크기·같은 무게. 세 개가 똑같아야 던질 때 손이 같은 느낌으로 반응해요. (2단계) 둘째, 튼튼해야 합니다. 수없이 떨어뜨릴 테니까요. (3단계) 셋째, 너무 가볍지 않아야 해요. 가벼우면 공기 저항에 흔들리고 손에서 느끼기 어렵습니다. (4단계) 넷째, 잘 튕기지 않고 잘 굴러가지 않아야 합니다. 떨어뜨렸을 때 멀리 가면 줍는 데 시간이 다 가요. (5단계) 쌀을 채운 공이 이 조건에 딱 맞아요. 발문: '고무공이나 농구공으로 저글링을 하면 왜 어려울까요?'">
+  <div class="abs eyebrow" style="left:100px;top:84px">03 · 만들기 전에 생각해요</div>
+  <div class="abs h2" style="left:100px;top:122px">좋은 저글링 볼의 <span class="hl-action">조건</span></div>
+
+  <div class="card" data-s="1" style="left:100px;top:260px;width:410px;height:580px;padding:20px 30px">
+    <svg class="jgs" data-jg="c-same" style="width:350px;height:284px"></svg>
+    <div class="h3" style="font-size:38px;margin:6px 0 8px">똑같아야 해요</div>
+    <div class="small" style="color:var(--ink-2)">모양 · 크기 · 무게가 모두 같아야 던지는 느낌이 같아요</div></div>
+  <div class="card" data-s="2" style="left:536px;top:260px;width:410px;height:580px;padding:20px 30px">
+    <svg class="jgs" data-jg="c-tough" style="width:350px;height:284px"></svg>
+    <div class="h3" style="font-size:38px;margin:6px 0 8px">튼튼해야 해요</div>
+    <div class="small" style="color:var(--ink-2)">여러 번 떨어뜨려도 터지거나 찌그러지지 않아요</div></div>
+  <div class="card" data-s="3" style="left:972px;top:260px;width:410px;height:580px;padding:20px 30px">
+    <svg class="jgs" data-jg="c-heavy" style="width:350px;height:284px"></svg>
+    <div class="h3" style="font-size:38px;margin:6px 0 8px">너무 가볍지 않게</div>
+    <div class="small" style="color:var(--ink-2)">적당한 무게감이 있어야 손에서 느끼기 쉬워요</div></div>
+  <div class="card" data-s="4" style="left:1408px;top:260px;width:412px;height:580px;padding:20px 30px">
+    <svg class="jgs" data-jg="c-still" style="width:350px;height:284px"></svg>
+    <div class="h3" style="font-size:38px;margin:6px 0 8px">안 튕기고 안 굴러요</div>
+    <div class="small" style="color:var(--ink-2)">떨어져도 멀리 가지 않아 줍기 편해요</div></div>
+
+  <div class="banner" data-s="5" style="left:100px;top:872px;width:1720px;height:108px;font-size:44px">쌀을 채운 공이 이 조건에 딱 맞아요!</div>
+</section>
+<script>Deck.scene('s05_conditions', { build(root) { JG.fill(root); } });</script>
+
+<!-- ── s06_versions.html ── -->
+<section class="slide" id="s06_versions" data-tile="light" data-title="만드는 방법 두 가지"
+  data-notes="(1단계) 쉬운 버전은 종이컵, 위생백, 쌀, 풍선, 가위만 있으면 됩니다. 칼이나 글루건이 필요 없어서 교실에서 바로 만들 수 있어요. (2단계) 튼튼한 버전은 테니스공을 잘라 속에 쌀을 넣고 글루건으로 붙입니다. 더 단단하고 오래 가지만 칼과 글루건을 쓰므로 선생님 도움이 필요해요. (3단계) 학급 상황에 맞게 한 가지를 골라 3개를 만들어요. 발문: '여러분은 어떤 버전으로 만들고 싶나요?'">
+  <div class="abs eyebrow" style="left:100px;top:84px">04 · 만들기</div>
+  <div class="abs h2" style="left:100px;top:122px">만드는 방법 <span class="hl-action">두 가지</span></div>
+
+  <div class="card" data-s="1" style="left:100px;top:270px;width:840px;height:600px;padding:34px 44px">
+    <div style="display:flex;gap:30px;align-items:center">
+      <svg class="jgs" data-jg="v-bag" style="width:300px;height:244px;flex:none"></svg>
+      <div><span class="tag is-action">쉬운 버전</span><div class="h3" style="margin-top:14px">위생백으로 만들기</div></div></div>
+    <div class="body" style="margin-top:22px;color:var(--ink-2)">· 칼·글루건 없이 만들어요<br>· 준비물이 간단해요<br>· 교실에서 바로 만들 수 있어요</div></div>
+  <div class="card" data-s="2" style="left:980px;top:270px;width:840px;height:600px;padding:34px 44px">
+    <div style="display:flex;gap:30px;align-items:center">
+      <svg class="jgs" data-jg="v-tennis" style="width:300px;height:244px;flex:none"></svg>
+      <div><span class="tag is-action">튼튼한 버전</span><div class="h3" style="margin-top:14px">테니스공으로 만들기</div></div></div>
+    <div class="body" style="margin-top:22px;color:var(--ink-2)">· 더 단단하고 오래 가요<br>· 칼·글루건을 써요<br>· 선생님과 함께 만들어요</div></div>
+
+  <div class="banner" data-s="3" style="left:100px;top:896px;width:1720px;height:96px;font-size:44px">한 가지를 골라 같은 공 3개를 만들어요</div>
+</section>
+<script>Deck.scene('s06_versions', { build(root) { JG.fill(root); } });</script>
+
+<!-- ── s07_easy_mat.html ── -->
+<section class="slide" id="s07_easy_mat" data-tile="parchment" data-title="쉬운 버전 · 준비물"
+  data-notes="(1단계) 종이컵은 쌀의 양을 재는 도구입니다. 위생백(비닐봉투)은 쌀을 담아요. 쌀은 컵 기준으로 공 3개 분량이 필요합니다. (2단계) 풍선은 6개에서 9개, 공 하나에 2~3개씩 쓰기 때문이에요. 가위는 풍선 입구를 자를 때 씁니다. 모둠별로 재료를 나눠 주면 좋아요. 발문: '왜 풍선을 여러 겹 씌울까요?'">
+  <div class="abs eyebrow" style="left:100px;top:84px">05 · 쉬운 버전</div>
+  <div class="abs h2" style="left:100px;top:122px">준비물을 챙겨요</div>
+
+  <div class="card" data-s="1" style="left:100px;top:290px;width:320px;height:560px;padding:0 0 24px;text-align:center">
+    <svg class="jgs" data-jg="m-cup" style="width:320px;height:260px"></svg>
+    <div class="h3">종이컵</div><div class="small" style="color:var(--ink-2)">1개 · 쌀 재는 용도</div></div>
+  <div class="card" data-s="1" style="left:450px;top:290px;width:320px;height:560px;padding:0 0 24px;text-align:center;transition-delay:.12s">
+    <svg class="jgs" data-jg="m-bag" style="width:320px;height:260px"></svg>
+    <div class="h3">위생백</div><div class="small" style="color:var(--ink-2)">비닐봉투 3장</div></div>
+  <div class="card" data-s="1" style="left:800px;top:290px;width:320px;height:560px;padding:0 0 24px;text-align:center;transition-delay:.24s">
+    <svg class="jgs" data-jg="m-rice" style="width:320px;height:260px"></svg>
+    <div class="h3">쌀</div><div class="small" style="color:var(--ink-2)">컵으로 3번 분량</div></div>
+  <div class="card" data-s="2" style="left:1150px;top:290px;width:320px;height:560px;padding:0 0 24px;text-align:center">
+    <svg class="jgs" data-jg="m-balloon" style="width:320px;height:260px"></svg>
+    <div class="h3">풍선</div><div class="small" style="color:var(--ink-2)">6개 ~ 9개</div></div>
+  <div class="card" data-s="2" style="left:1500px;top:290px;width:320px;height:560px;padding:0 0 24px;text-align:center;transition-delay:.12s">
+    <svg class="jgs" data-jg="m-scissors" style="width:320px;height:260px"></svg>
+    <div class="h3">가위</div><div class="small" style="color:var(--ink-2)">풍선 입구 자르기</div></div>
+  <div class="banner" data-s="3" style="left:100px;top:890px;width:1720px;height:96px;font-size:44px">공 하나에 풍선 2~3개 → 3개 만들면 6~9개</div>
+</section>
+<script>Deck.scene('s07_easy_mat', { build(root) { JG.fill(root); } });</script>
+
+<!-- ── s08_easy_a.html ── -->
+<section class="slide" id="s08_easy_a" data-tile="dark" data-title="쉬운 버전 ① 속 채우기"
+  data-notes="(1단계) 종이컵 안쪽에 컵 높이의 70% 정도 되는 곳에 선을 그어요. 이 선이 쌀의 양을 재는 기준이 되어서, 세 개가 같은 무게가 됩니다. (2단계) 선에 맞춰 쌀을 채워요. 넘치거나 모자라지 않게 평평하게 맞추세요. (3단계) 쌀을 위생백에 쏟고, 공기를 빼면서 동그랗게 모양을 잡은 뒤 입구를 단단히 묶어요. 세 개의 무게를 같게 하려면 '컵 70%'를 꼭 지키는 것이 중요합니다. 발문: '쌀의 양이 다르면 어떤 일이 생길까요?'">
+  <div class="abs eyebrow" style="left:100px;top:84px">쉬운 버전 · 1~3번</div>
+  <div class="abs h2" style="left:100px;top:122px">쌀로 <span class="hl-action">속</span>을 만들어요</div>
+
+  <div class="step-card" data-s="1" style="left:100px;top:290px;width:550px;height:600px">
+    <div class="ill"><svg class="jgs" data-jg="cup-line" style="width:490px;height:398px"></svg></div>
+    <div class="row"><span class="num">1</span><span class="h3">종이컵에 선 긋기</span></div>
+    <div class="small">컵 높이의 <span class="hl-action">70%</span> 정도에 선을 그려요</div></div>
+  <div class="step-card" data-s="2" style="left:685px;top:290px;width:550px;height:600px">
+    <div class="ill"><svg class="jgs" data-jg="cup-rice" style="width:490px;height:398px"></svg></div>
+    <div class="row"><span class="num">2</span><span class="h3">선에 맞춰 쌀 채우기</span></div>
+    <div class="small">넘치지 않게, 선까지만!</div></div>
+  <div class="step-card" data-s="3" style="left:1270px;top:290px;width:550px;height:600px">
+    <div class="ill"><svg class="jgs" data-jg="bag-tie" style="width:490px;height:398px"></svg></div>
+    <div class="row"><span class="num">3</span><span class="h3">위생백에 담아 묶기</span></div>
+    <div class="small">공기를 빼고 동그랗게 묶어요</div></div>
+</section>
+<script>Deck.scene('s08_easy_a', { build(root) { JG.fill(root); } });</script>
+
+<!-- ── s09_easy_b.html ── -->
+<section class="slide" id="s09_easy_b" data-tile="graphite" data-title="쉬운 버전 ② 풍선으로 감싸기"
+  data-notes="(4단계) 쌀이 든 위생백을 풍선으로 감쌉니다. 풍선 입구를 벌려 공을 쏙 집어넣듯 씌워요. (5단계) 풍선의 튀어나온 부분, 입으로 부는 곳을 가위로 잘라냅니다. (6단계) 같은 방법으로 풍선을 2겹에서 3겹 씌워요. 풍선의 구멍이 난 방향을 서로 어긋나게 돌려 씌우면 구멍이 가려져서 더 튼튼합니다. 겹마다 색을 다르게 하면 예뻐요. (7단계) 같은 방법으로 3개를 만듭니다. 만든 뒤 크기와 무게를 비교해 보세요. 발문: '풍선 구멍의 방향을 어떻게 하면 더 튼튼할까요?'">
+  <div class="abs eyebrow" style="left:100px;top:84px">쉬운 버전 · 4~7번</div>
+  <div class="abs h2" style="left:100px;top:122px">풍선으로 <span class="hl-action">감싸요</span></div>
+
+  <div class="step-card" data-s="1" style="left:100px;top:290px;width:410px;height:580px">
+    <div class="ill"><svg class="jgs" data-jg="wrap" data-base="bag" style="width:350px;height:284px"></svg></div>
+    <div class="row"><span class="num">4</span><span class="h3">풍선 씌우기</span></div>
+    <div class="small">위생백 공을 풍선으로 감싸요</div></div>
+  <div class="step-card" data-s="2" style="left:536px;top:290px;width:410px;height:580px">
+    <div class="ill"><svg class="jgs" data-jg="cut" data-base="bag" style="width:350px;height:284px"></svg></div>
+    <div class="row"><span class="num">5</span><span class="h3">입 부분 자르기</span></div>
+    <div class="small">튀어나온 부분을 가위로 싹둑</div></div>
+  <div class="step-card" data-s="3" style="left:972px;top:290px;width:410px;height:580px">
+    <div class="ill"><svg class="jgs" data-jg="layers" style="width:350px;height:284px"></svg></div>
+    <div class="row"><span class="num">6</span><span class="h3">2~3겹 감싸기</span></div>
+    <div class="small">구멍 방향을 어긋나게 씌워요</div></div>
+  <div class="step-card" data-s="4" style="left:1408px;top:290px;width:412px;height:580px">
+    <div class="ill"><svg class="jgs" data-jg="three" style="width:350px;height:284px"></svg></div>
+    <div class="row"><span class="num">7</span><span class="h3">3개 만들기</span></div>
+    <div class="small">같은 방법으로 똑같이 3개!</div></div>
+</section>
+<script>Deck.scene('s09_easy_b', { build(root) { JG.fill(root); } });</script>
+
+<!-- ── s10_tough_mat.html ── -->
+<section class="slide" id="s10_tough_mat" data-tile="parchment" data-title="튼튼한 버전 · 준비물"
+  data-notes="(1단계) 종이컵, 쌀, 풍선, 가위는 쉬운 버전과 같습니다. 여기에 깔대기가 더해져요. 깔대기는 좁은 테니스공 틈으로 쌀을 흘리지 않고 넣는 도구입니다. (2단계) 테니스공 3개, 칼, 글루건이 새로 필요합니다. 팁: 다이소에서 파는 '테니스공 의자 발커버'는 이미 잘려 있어서 칼질을 건너뛸 수 있어요. 칼과 글루건은 아이들이 쓰기 위험하니 선생님이 하거나 곁에서 지도해 주세요. (3단계) 안전 안내. 발문: '왜 테니스공 속에 쌀을 넣을까요?'">
+  <div class="abs eyebrow" style="left:100px;top:84px">06 · 튼튼한 버전</div>
+  <div class="abs h2" style="left:100px;top:122px">준비물을 챙겨요</div>
+
+  <div class="card" data-s="1" style="left:100px;top:250px;width:410px;height:290px;padding:0 0 14px;text-align:center"><svg class="jgs" data-jg="m-cup" style="width:200px;height:162px;margin:10px auto 0"></svg><div class="h3" style="font-size:38px">종이컵</div><div class="small" style="color:var(--ink-2)">쌀 재는 용도</div></div>
+  <div class="card" data-s="1" style="left:536px;top:250px;width:410px;height:290px;padding:0 0 14px;text-align:center;transition-delay:.1s"><svg class="jgs" data-jg="m-rice" style="width:200px;height:162px;margin:10px auto 0"></svg><div class="h3" style="font-size:38px">쌀</div><div class="small" style="color:var(--ink-2)">컵으로 3번 분량</div></div>
+  <div class="card" data-s="1" style="left:972px;top:250px;width:410px;height:290px;padding:0 0 14px;text-align:center;transition-delay:.2s"><svg class="jgs" data-jg="m-balloon" style="width:200px;height:162px;margin:10px auto 0"></svg><div class="h3" style="font-size:38px">풍선</div><div class="small" style="color:var(--ink-2)">6개 ~ 9개</div></div>
+  <div class="card" data-s="1" style="left:1408px;top:250px;width:412px;height:290px;padding:0 0 14px;text-align:center;transition-delay:.3s"><svg class="jgs" data-jg="m-scissors" style="width:200px;height:162px;margin:10px auto 0"></svg><div class="h3" style="font-size:38px">가위</div><div class="small" style="color:var(--ink-2)">풍선 입구 자르기</div></div>
+
+  <div class="card" data-s="2" style="left:100px;top:566px;width:410px;height:290px;padding:0 0 14px;text-align:center"><svg class="jgs" data-jg="m-funnel" style="width:200px;height:162px;margin:10px auto 0"></svg><div class="h3" style="font-size:38px">깔대기</div><div class="small" style="color:var(--ink-2)">쌀 넣는 용도</div></div>
+  <div class="card" data-s="2" style="left:536px;top:566px;width:410px;height:290px;padding:0 0 14px;text-align:center;transition-delay:.1s"><svg class="jgs" data-jg="m-tennis" style="width:200px;height:162px;margin:10px auto 0"></svg><div class="h3" style="font-size:38px">테니스공</div><div class="small" style="color:var(--ink-2)">3개</div></div>
+  <div class="card" data-s="2" style="left:972px;top:566px;width:410px;height:290px;padding:0 0 14px;text-align:center;transition-delay:.2s"><svg class="jgs" data-jg="m-knife" style="width:200px;height:162px;margin:10px auto 0"></svg><div class="h3" style="font-size:38px">칼</div><div class="small" style="color:var(--ink-2)">테니스공 자르기</div></div>
+  <div class="card" data-s="2" style="left:1408px;top:566px;width:412px;height:290px;padding:0 0 14px;text-align:center;transition-delay:.3s"><svg class="jgs" data-jg="m-glue" style="width:200px;height:162px;margin:10px auto 0"></svg><div class="h3" style="font-size:38px">글루건</div><div class="small" style="color:var(--ink-2)">틈 메우기</div></div>
+
+  <div class="abs" data-s="3" style="left:100px;top:884px;width:1720px;height:104px;border-radius:28px;background:var(--c-dark);color:var(--warn-hi);display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:700">칼 · 글루건은 선생님과 함께! 다이소 '테니스공 의자 발커버'는 이미 잘려 있어요</div>
+</section>
+<script>Deck.scene('s10_tough_mat', { build(root) { JG.fill(root); } });</script>
+
+<!-- ── s11_tough_a.html ── -->
+<section class="slide" id="s11_tough_a" data-tile="dark" data-title="튼튼한 버전 ① 속 채우기"
+  data-notes="(1단계) 테니스공에 칼집을 내서 잘라 줍니다. 이 단계는 위험하니 선생님이 해 주세요. 다이소의 '테니스공 의자 발커버'는 이미 잘려 있어서 이 단계를 건너뛸 수 있어요. (2단계) 쉬운 버전과 똑같이 종이컵 70%에 선을 긋고 쌀을 채워 양을 잽니다. 세 개의 무게를 같게 만드는 열쇠예요. (3단계) 깔대기를 테니스공 틈에 대고 쌀을 안쪽으로 넣습니다. (4단계) 벌어진 틈을 글루건으로 메웁니다. 글루가 굳을 때까지 기다리고, 뜨거운 노즐은 만지지 않아요. 발문: '쌀이 새지 않게 하려면 글루를 어떻게 바르면 좋을까요?'">
+  <div class="abs eyebrow" style="left:100px;top:84px">튼튼한 버전 · 1~4번</div>
+  <div class="abs h2" style="left:100px;top:122px">테니스공 속을 <span class="hl-action">채워요</span></div>
+
+  <div class="step-card" data-s="1" style="left:100px;top:290px;width:410px;height:640px">
+    <div class="ill"><svg class="jgs" data-jg="tennis-cut" style="width:350px;height:284px"></svg></div>
+    <div class="row"><span class="num">1</span><span class="h3">테니스공 자르기</span></div>
+    <div class="small">칼집을 내서 잘라요 (선생님이!)</div>
+    <span class="note-warn">발커버는 이미 잘려 있어요</span></div>
+  <div class="step-card" data-s="2" style="left:536px;top:290px;width:410px;height:640px">
+    <div class="ill"><svg class="jgs" data-jg="cup-rice" style="width:350px;height:284px"></svg></div>
+    <div class="row"><span class="num">2</span><span class="h3">컵 70% 쌀 재기</span></div>
+    <div class="small">컵에 선을 긋고 쌀을 선까지 채워요</div></div>
+  <div class="step-card" data-s="3" style="left:972px;top:290px;width:410px;height:640px">
+    <div class="ill"><svg class="jgs" data-jg="funnel-fill" style="width:350px;height:284px"></svg></div>
+    <div class="row"><span class="num">3</span><span class="h3">깔대기로 쌀 넣기</span></div>
+    <div class="small">테니스공 안쪽에 쌀을 흘리지 않고 넣어요</div></div>
+  <div class="step-card" data-s="4" style="left:1408px;top:290px;width:412px;height:640px">
+    <div class="ill"><svg class="jgs" data-jg="glue" style="width:350px;height:284px"></svg></div>
+    <div class="row"><span class="num">4</span><span class="h3">글루건으로 막기</span></div>
+    <div class="small">벌어진 틈을 <span class="hl-heat">뜨거운</span> 글루로 메워요</div></div>
+</section>
+<script>Deck.scene('s11_tough_a', { build(root) { JG.fill(root); } });</script>
+
+<!-- ── s12_tough_b.html ── -->
+<section class="slide" id="s12_tough_b" data-tile="graphite" data-title="튼튼한 버전 ② 풍선으로 감싸기"
+  data-notes="(5단계) 글루가 완전히 굳으면 테니스공을 풍선으로 감쌉니다. (6단계) 튀어나온 입 부분을 가위로 잘라요. (7단계) 풍선을 2겹에서 3겹 씌웁니다. 이 부분은 쉬운 버전과 완전히 같아요. 테니스공의 틈과 글루 부분이 풍선으로 가려지고, 표면이 부드러워져서 손에 잘 붙고 덜 미끄러워요. (8단계) 같은 방법으로 3개를 만듭니다. 발문: '쉬운 버전과 튼튼한 버전, 무엇이 다를까요?'">
+  <div class="abs eyebrow" style="left:100px;top:84px">튼튼한 버전 · 5~8번</div>
+  <div class="abs h2" style="left:100px;top:122px">풍선으로 <span class="hl-action">감싸요</span> <span class="lead" style="font-size:36px">(쉬운 버전과 같아요)</span></div>
+
+  <div class="step-card" data-s="1" style="left:100px;top:290px;width:410px;height:580px">
+    <div class="ill"><svg class="jgs" data-jg="wrap" data-base="tennis" style="width:350px;height:284px"></svg></div>
+    <div class="row"><span class="num">5</span><span class="h3">풍선 씌우기</span></div>
+    <div class="small">테니스공을 풍선으로 감싸요</div></div>
+  <div class="step-card" data-s="2" style="left:536px;top:290px;width:410px;height:580px">
+    <div class="ill"><svg class="jgs" data-jg="cut" data-base="tennis" style="width:350px;height:284px"></svg></div>
+    <div class="row"><span class="num">6</span><span class="h3">입 부분 자르기</span></div>
+    <div class="small">튀어나온 부분을 가위로 싹둑</div></div>
+  <div class="step-card" data-s="3" style="left:972px;top:290px;width:410px;height:580px">
+    <div class="ill"><svg class="jgs" data-jg="layers" data-base="tennis" style="width:350px;height:284px"></svg></div>
+    <div class="row"><span class="num">7</span><span class="h3">2~3겹 감싸기</span></div>
+    <div class="small">구멍 방향을 어긋나게 씌워요</div></div>
+  <div class="step-card" data-s="4" style="left:1408px;top:290px;width:412px;height:580px">
+    <div class="ill"><svg class="jgs" data-jg="three" data-base="tennis" style="width:350px;height:284px"></svg></div>
+    <div class="row"><span class="num">8</span><span class="h3">3개 만들기</span></div>
+    <div class="small">같은 방법으로 똑같이 3개!</div></div>
+</section>
+<script>Deck.scene('s12_tough_b', { build(root) { JG.fill(root); } });</script>
+
+<!-- ── s13_safety.html ── -->
+<section class="slide" id="s13_safety" data-tile="light" data-title="안전하게 만들어요"
+  data-notes="(1단계) 칼은 선생님이 쓰거나 곁에서 지도합니다. 자를 때는 손이나 몸 쪽으로 향하지 않게 하고, 단단한 책상 위에서 해요. (2단계) 글루건은 노즐과 녹은 글루가 매우 뜨겁습니다. 손으로 만지지 말고 쓰지 않을 때는 받침에 세워 둡니다. 쓰고 나서는 꼭 전원을 꺼요. (3단계) 가위는 풍선 입구만 자르고, 쌀은 쟁반 위에서 다뤄 바닥에 흘리지 않게 합니다. 쌀이 바닥에 있으면 미끄러워요. 학급 상황에 맞게 이 장은 고치거나 빼도 좋습니다. 발문: '뜨거운 글루건을 쓸 때 가장 조심할 점은 무엇일까요?'">
+  <div class="abs eyebrow" style="left:100px;top:84px">07 · 잠깐, 안전!</div>
+  <div class="abs h2" style="left:100px;top:122px">안전하게 <span class="hl-action">만들어요</span></div>
+
+  <div class="card" data-s="1" style="left:100px;top:290px;width:550px;height:640px;padding:0 36px 30px">
+    <svg class="jgs" data-jg="m-knife" style="width:400px;height:325px;margin:0 auto"></svg>
+    <span class="tag is-action">칼</span><div class="h3" style="margin:12px 0 8px;font-size:40px">선생님이 해요</div>
+    <div class="small" style="color:var(--ink-2)">몸 반대쪽으로, 단단한 책상 위에서 잘라요</div></div>
+  <div class="card" data-s="2" style="left:685px;top:290px;width:550px;height:640px;padding:0 36px 30px">
+    <svg class="jgs" data-jg="m-glue" style="width:400px;height:325px;margin:0 auto"></svg>
+    <span class="tag" style="background:var(--heat);color:#fff">글루건</span><div class="h3" style="margin:12px 0 8px;font-size:40px">노즐은 뜨거워요</div>
+    <div class="small" style="color:var(--ink-2)">녹은 글루는 만지지 말고, 다 쓰면 전원 끄기</div></div>
+  <div class="card" data-s="3" style="left:1270px;top:290px;width:550px;height:640px;padding:0 36px 30px">
+    <svg class="jgs" data-jg="m-rice" style="width:400px;height:325px;margin:0 auto"></svg>
+    <span class="tag is-action">가위 · 쌀</span><div class="h3" style="margin:12px 0 8px;font-size:40px">쟁반 위에서</div>
+    <div class="small" style="color:var(--ink-2)">쌀이 바닥에 떨어지면 미끄러워요. 바로 주워요</div></div>
+</section>
+<script>Deck.scene('s13_safety', { build(root) { JG.fill(root); } });</script>
+
+<!-- ── s14_check.html ── -->
+<section class="slide" id="s14_check" data-tile="parchment" data-title="완성 점검 · 좋은 공일까?"
+  data-notes="(1단계) 세 개를 나란히 놓고 크기와 모양을 비교해요. (2단계) 양손에 하나씩 올려 보고 무게가 같은지 느껴 봅니다. 쉬운 방법으로 한 손에 두 개를 올려 번갈아 비교해도 돼요. (3단계) 손으로 꾹꾹 눌러 보고 터지거나 찌그러지지 않는지 확인합니다. (4단계) 책상 높이에서 바닥에 떨어뜨려 보고 많이 튕기거나 구르지 않는지 확인해요. 하나라도 걸리면 쌀을 더하거나 덜어 내고 풍선을 덧씌워 고칩니다. 다음 시간부터는 이 공으로 연습해요. 발문: '내 공 세 개는 좋은 공일까요? 어디를 고치면 좋을까요?'">
+  <div class="abs eyebrow" style="left:100px;top:84px">08 · 완성 점검</div>
+  <div class="abs h2" style="left:100px;top:122px">내 공은 <span class="hl-action">좋은 공</span>일까?</div>
+
+  <div class="card" data-s="1" style="left:100px;top:262px;width:1720px;height:160px;padding:0 44px;display:flex;align-items:center;gap:34px">
+    <svg class="jgs" data-jg="c-same" style="width:176px;height:143px;flex:none"></svg>
+    <div><div class="h3">같은 크기 · 같은 모양인가요?</div><div class="body" style="color:var(--ink-2)">3개를 나란히 놓고 비교해요</div></div></div>
+  <div class="card" data-s="2" style="left:100px;top:436px;width:1720px;height:160px;padding:0 44px;display:flex;align-items:center;gap:34px">
+    <svg class="jgs" data-jg="c-heavy" style="width:176px;height:143px;flex:none"></svg>
+    <div><div class="h3">같은 무게인가요? 가볍지 않나요?</div><div class="body" style="color:var(--ink-2)">양손에 올려 무게를 느껴 보세요</div></div></div>
+  <div class="card" data-s="3" style="left:100px;top:610px;width:1720px;height:160px;padding:0 44px;display:flex;align-items:center;gap:34px">
+    <svg class="jgs" data-jg="c-tough" style="width:176px;height:143px;flex:none"></svg>
+    <div><div class="h3">튼튼한가요?</div><div class="body" style="color:var(--ink-2)">꾹꾹 눌러 봐도 터지거나 찌그러지지 않아요</div></div></div>
+  <div class="card" data-s="4" style="left:100px;top:784px;width:1720px;height:160px;padding:0 44px;display:flex;align-items:center;gap:34px">
+    <svg class="jgs" data-jg="c-still" style="width:176px;height:143px;flex:none"></svg>
+    <div><div class="h3">안 튕기고 안 굴러가나요?</div><div class="body" style="color:var(--ink-2)">책상 높이에서 바닥에 떨어뜨려 봐요</div></div></div>
+</section>
+<script>Deck.scene('s14_check', { build(root) { JG.fill(root); } });</script>
+
+<!-- ── s15_end.html ── -->
+<section class="slide" id="s15_end" data-tile="black" data-title="마무리 · 다음 시간 예고"
+  data-notes="(1단계) 오늘 만든 공 세 개를 손에 쥐어 보세요. 이게 앞으로 3볼 저글링에 쓸 여러분의 공입니다. (2단계) 다음 2차시에는 공 1개로 던지고 받는 연습을 합니다. 연습 시간은 수업과 별도로 확보되어 있으니, 공은 잘 보관해서 가져오세요. 이름을 적어 두면 좋아요. 발문: '오늘 만든 공에 이름을 붙인다면?'">
+  <svg class="fullsvg" viewBox="0 0 1920 1080">
+    <g id="s15-balls"></g>
+  </svg>
+  <div class="abs center rise" style="left:0;width:1920px;top:560px;--d:.2s"><span class="eyebrow">1차시 끝</span></div>
+  <div class="abs center h1 rise" style="left:0;width:1920px;top:606px;--d:.4s">공 세 개 완성!</div>
+  <div class="abs center lead rise" style="left:0;width:1920px;top:770px;--d:.7s">다음 시간 · 공 1개로 던지고 받기</div>
+  <div class="abs center rise" style="left:0;width:1920px;top:880px;--d:1s"><span class="tag">이름을 적어 두세요</span></div>
+</section>
+<script>
+Deck.scene('s15_end', {
+  steps: 0,
+  build(root) {
+    const g = root.querySelector('#s15-balls');
+    g.innerHTML = [['a', 700], ['b', 960], ['c', 1220]].map(b => `<g class="fb"><circle cx="${b[1]}" cy="380" r="90" style="fill:var(--ball-${b[0]})"/><ellipse cx="${b[1] - 32}" cy="${380 - 36}" rx="27" ry="15" fill="#fff" opacity=".35" transform="rotate(-35 ${b[1] - 32} ${380 - 36})"/></g>`).join('');
+    root._fb = [...g.querySelectorAll('.fb')];
+  },
+  enter(c) { const f = c.root._fb; c.loop(t => f.forEach((e, i) => e.setAttribute('transform', `translate(0 ${Math.sin(t / 700 + i * 1.3) * 18})`))); }
+});
+</script>
+
+  </div>
+</div>
+<div id="bar"></div>
+<div id="hud"></div>
+<div id="notes"></div>
+<div id="overview"></div>
+<div id="help">
+  <h3>강의 조작</h3>
+  <dl>
+    <dt>→ · Space · 클릭</dt><dd>다음 (빌드 단계 → 다음 장)</dd>
+    <dt>← · 오른쪽 클릭</dt><dd>이전</dd>
+    <dt>R</dt><dd>이 단계 애니메이션 다시 보기</dd>
+    <dt>N</dt><dd>발표자 노트(대본)</dd>
+    <dt>O</dt><dd>전체 보기(목차)</dd>
+    <dt>F</dt><dd>전체 화면</dd>
+    <dt>B / W</dt><dd>검은 화면 / 흰 화면</dd>
+    <dt>숫자 + Enter</dt><dd>그 장으로 이동</dd>
+    <dt>좌우로 밀기</dt><dd>전자칠판에서 넘기기</dd>
+    <dt>?still=1</dt><dd>주소 뒤에 붙이면 모든 단계를 펼친 정지 화면(인쇄·캡처용)</dd>
+  </dl>
+</div>
+<div id="blank"></div>
+<script>Deck.start();</script>
+</body>
+</html>
