@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>슬라이드 엔진 비교 실험</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+/* 한 열 문서: 머리말 → 시험 덱 바로가기 → 기능 비교표 → 결론 */
+:root{
+  --bg:#f5f5f7; --panel:#ffffff; --ink:#1d1d1f; --ink-2:#6e6e73; --line:#e0e0e0;
+  --action:#0066cc; --ok:#1E8B3E; --mid:#9A7400; --no:#C4391B;
+  --font:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root{--bg:#1d1d1f;--panel:#272729;--ink:#f5f5f7;--ink-2:#a1a1a6;--line:#3a3a3c;--action:#2997ff;--ok:#30D158;--mid:#FFD60A;--no:#FF6A3D;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 var(--font);word-break:keep-all;padding-inline:16px;padding-block:40px 64px}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:40px}
+h1{font-size:2.2rem;line-height:1.2;margin:0;letter-spacing:-.02em;text-wrap:balance}
+h2{font-size:1.4rem;margin:0 0 14px;letter-spacing:-.01em}
+p{margin:0;max-width:68ch}
+.sub{color:var(--ink-2)}
+.decks{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.deck{display:flex;flex-direction:column;gap:6px;padding:20px;border-radius:18px;background:var(--panel);color:inherit;text-decoration:none}
+.deck:hover,.deck:focus-visible{outline:2px solid var(--action);outline-offset:2px}
+.deck b{font-size:1.15rem}
+.deck small{color:var(--ink-2);font-size:.85rem;line-height:1.45}
+.deck .go{color:var(--action);font-weight:600;font-size:.9rem;margin-top:auto}
+.tablebox{overflow-x:auto;background:var(--panel);border-radius:18px}
+table{border-collapse:collapse;width:100%;min-width:860px;font-size:.92rem}
+th,td{padding:12px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+thead th{font-size:.85rem;color:var(--ink-2);font-weight:600}
+tbody th{font-weight:600;white-space:nowrap}
+td span{display:block;color:var(--ink-2);font-size:.82rem;line-height:1.4;margin-top:2px}
+.y,.m,.n{font-weight:700}
+.y{color:var(--ok)} .m{color:var(--mid)} .n{color:var(--no)}
+.legend{font-size:.85rem;color:var(--ink-2);margin-top:10px}
+.verdict{display:flex;flex-direction:column;gap:14px}
+.v{padding:20px 22px;border-radius:18px;background:var(--panel)}
+.v h3{margin:0 0 6px;font-size:1.1rem}
+.v ul{margin:8px 0 0;padding-left:1.2em}
+code{font-size:.9em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header style="display:flex;flex-direction:column;gap:10px">
+  <h1>슬라이드 엔진 비교 실험</h1>
+  <p class="sub">같은 내용(저글링 연습 4장: 표지 · 4가지 세부사항 · 포물선 애니메이션 · 리듬 단계)을 엔진 5개로 똑같이 만들어 초등 수업 기준으로 비교했습니다. 내용과 그림은 <code>build-lab.js</code> 한 곳에서 만들고, 엔진마다 단계 표시 문법만 바꿨습니다. 2026-10-04 시험.</p>
+</header>
+
+<section>
+  <h2>시험 덱 열어 보기</h2>
+  <div class="decks">
+    <a class="deck" href="current/index.html"><b>지금 엔진</b><small>이 프로젝트 자체 엔진 · 24KB</small><span class="go">열기 →</span></a>
+    <a class="deck" href="reveal/index.html"><b>reveal.js 6.0.2</b><small>MIT · 판서(chalkboard) 플러그인 포함</small><span class="go">열기 →</span></a>
+    <a class="deck" href="impress/index.html"><b>impress.js 1.1.0</b><small>MIT · 확대·회전하는 프레지식</small><span class="go">열기 →</span></a>
+    <a class="deck" href="marp/index.html"><b>Marp 4.5.1</b><small>MIT · 마크다운으로 작성 → 파일 하나</small><span class="go">열기 →</span></a>
+    <a class="deck" href="slidev/dist/index.html"><b>Slidev 53.0.0</b><small>MIT · 마크다운 + 빌드 필요</small><span class="go">열기 →</span></a>
+  </div>
+  <p class="legend">판서: reveal.js는 왼쪽 아래 연필, Slidev는 아래 도구 막대의 펜. 발표자 화면: reveal.js <code>S</code>, Marp <code>P</code>, Slidev 도구 막대.</p>
+</section>
+
+<section>
+  <h2>기능 비교</h2>
+  <div class="tablebox"><table>
+    <thead><tr><th>기능</th><th>지금 엔진</th><th>reveal.js</th><th>impress.js</th><th>Marp</th><th>Slidev</th></tr></thead>
+    <tbody>
+      <tr><th>클릭마다 하나씩 등장</th>
+        <td class="y">○<span>data-s 숫자로 순서 지정</span></td>
+        <td class="y">○<span>fragment, SVG 안 요소도 됨</span></td>
+        <td class="y">○<span>substep</span></td>
+        <td class="m">△<span>목록(*) 항목만</span></td>
+        <td class="y">○<span>v-click, SVG 안 요소도 됨</span></td></tr>
+      <tr><th>원리 그림 애니메이션</th>
+        <td class="y">○<span>SVG·자바스크립트 모두, 그림 부품(OBJ·FX)까지</span></td>
+        <td class="y">○</td><td class="y">○</td>
+        <td class="n">✕<span>시험에서 SVG 애니메이션이 멈춤(장마다 SVG로 감싸는 구조 탓)</span></td>
+        <td class="y">○</td></tr>
+      <tr><th>화면에 판서</th>
+        <td class="n">✕<span>Focus &amp; Draw 프로그램으로 대신</span></td>
+        <td class="y">○<span>chalkboard 플러그인, 시험에서 그려짐</span></td>
+        <td class="n">✕</td><td class="n">✕</td>
+        <td class="y">○<span>내장 · 펜·선·화살표·원·사각형·색·되돌리기</span></td></tr>
+      <tr><th>발표자 대본</th>
+        <td class="m">△<span>N 키 · 같은 화면 아래에 표시</span></td>
+        <td class="y">○<span>S 키 · 별도 창, 타이머, 다음 장 미리보기*</span></td>
+        <td class="m">△<span>콘솔 플러그인*</span></td>
+        <td class="y">○<span>발표자 보기*</span></td>
+        <td class="y">○<span>발표자 모드, 타이머*</span></td></tr>
+      <tr><th>전체 목차 보기</th>
+        <td class="y">○<span>O 키</span></td><td class="y">○<span>O / Esc</span></td>
+        <td class="m">△<span>개요 장을 직접 배치</span></td><td class="n">✕</td><td class="y">○</td></tr>
+      <tr><th>PDF로 내보내기</th>
+        <td class="m">△<span>?still=1 화면을 인쇄</span></td>
+        <td class="y">○<span>?print-pdf 로 인쇄*</span></td>
+        <td class="n">✕</td>
+        <td class="y">○<span>PDF·PPTX (CLI)*</span></td>
+        <td class="y">○<span>PDF·PPTX (추가 설치)*</span></td></tr>
+      <tr><th>파일 하나로 공유</th>
+        <td class="y">○<span>HTML 1개 (엔진 주소 2줄)</span></td>
+        <td class="m">△<span>CSS·JS·플러그인 여러 개 (합칠 수는 있음)</span></td>
+        <td class="y">○<span>HTML + 엔진 파일 1개</span></td>
+        <td class="y">○<span>HTML 1개, 134KB</span></td>
+        <td class="n">✕<span>파일 42개 폴더, 884KB</span></td></tr>
+      <tr><th>만드는 데 필요한 것</th>
+        <td>메모장 · 채팅 AI</td><td>메모장 · 채팅 AI</td><td>메모장 · 좌표 계산</td>
+        <td>Marp 프로그램 또는 VS Code 확장</td>
+        <td>Node.js + 도구 537MB 설치, 빌드</td></tr>
+      <tr><th>채팅 AI가 아는 정도</th>
+        <td class="m">△<span>지시서(56KB) 필요, 시험 결과 좋음</span></td>
+        <td class="y">○<span>가장 널리 쓰여 잘 앎</span></td>
+        <td class="m">△</td><td class="y">○</td><td class="m">△</td></tr>
+      <tr><th>엔진 크기</th>
+        <td>24KB</td><td>약 175KB + 플러그인</td><td>약 45KB</td><td>(결과물 134KB)</td><td>(결과물 884KB)</td></tr>
+    </tbody>
+  </table></div>
+  <p class="legend">○ 됨 · △ 일부·불편 · ✕ 안 됨. * 표시는 문서에 있는 기능으로 이번에 직접 눌러 보지 않은 것입니다(발표자 화면은 새 창을 여는 기능이라 시험 창에서 확인하지 못함).</p>
+</section>
+
+<section class="verdict">
+  <h2>결론 (초등 수업 기준)</h2>
+  <div class="v"><h3>1. 지금 엔진을 계속 쓰는 것이 맞다</h3>
+    <p>원리를 그림과 움직임으로 보여 주는 수업에는 이미 가장 잘 맞습니다. 가볍고, 파일 하나로 나눠 줄 수 있고, 채팅 AI 지시서까지 검증됐습니다. 판서는 이미 만든 Focus &amp; Draw로 어느 엔진 위에서나 할 수 있습니다.</p></div>
+  <div class="v"><h3>2. 다른 엔진에서 가져올 만한 기능</h3>
+    <ul>
+      <li><b>발표자 별도 창</b> (reveal.js): 교실 TV에는 슬라이드, 교사 노트북에는 대본·타이머·다음 장.</li>
+      <li><b>PDF 내보내기</b> (reveal.js·Marp): 학습지·결석생 자료용.</li>
+      <li><b>엔진 내장 펜</b> (Slidev): Focus &amp; Draw를 설치할 수 없는 학교 컴퓨터를 위해 간단한 펜·지우개 정도.</li>
+      <li><b>장면 사이 모양 이어짐</b> (reveal.js auto-animate): 같은 그림이 다음 장에서 커지거나 옮겨 가는 연출.</li>
+    </ul></div>
+  <div class="v"><h3>3. 바꾼다면 reveal.js</h3>
+    <p>기능이 가장 많고, 판서 플러그인이 있고, 채팅 AI가 가장 잘 아는 엔진입니다. 대신 지금 엔진의 그림 부품(OBJ·FX)과 디자인 규칙을 옮기는 작업이 필요합니다.</p></div>
+  <div class="v"><h3>4. 나머지</h3>
+    <ul>
+      <li><b>Marp</b>: 글 위주 자료를 빨리 만들고 PPTX가 필요할 때 좋습니다. 애니메이션 수업에는 맞지 않습니다.</li>
+      <li><b>Slidev</b>: 기능은 가장 풍부하지만 설치·빌드가 필요해 다른 선생님께 권하기 어렵습니다.</li>
+      <li><b>impress.js</b>: 확대·회전 연출이 인상적이지만 장마다 좌표를 직접 정해야 해서 만들기 번거롭습니다. 특별한 도입 장면용.</li>
+    </ul></div>
+</section>
+
+</div>
+</body>
+</html>

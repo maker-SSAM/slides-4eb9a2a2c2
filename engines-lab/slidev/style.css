@@ -1,0 +1,19 @@
+.slidev-layout.lab{background:#1d1d1f !important;padding:84px 100px !important}
+
+.slidev-layout.lab{--ball-a:#FF5C8A;--ball-b:#A78BFA;--ball-c:#FFA64D;--skin:#E8B796;--action:#2997ff;--warn:#FFD60A;--ink:#f5f5f7;--ink-2:#a1a1a6;--card:#272729;--bg:#1d1d1f;font-family:"Pretendard Variable",Pretendard,"Apple SD Gothic Neo",sans-serif;color:var(--ink);word-break:keep-all;text-align:left}
+.slidev-layout.lab .lab-h1{font-size:128px;font-weight:700;letter-spacing:-.025em;line-height:1.1;margin:0;text-align:center}
+.slidev-layout.lab .lab-lead{font-size:44px;color:var(--ink-2);margin:0;text-align:center}
+.slidev-layout.lab .lab-eye{font-size:30px;font-weight:600;color:var(--ink-2);margin:0}
+.slidev-layout.lab .lab-h2{font-size:76px;font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:8px 0 0}
+.slidev-layout.lab .lab-h2 b{color:var(--action)}
+.slidev-layout.lab .lab-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:26px;margin-top:60px}
+.slidev-layout.lab .lab-card{background:var(--card);border-radius:28px;padding:40px 36px;min-height:360px}
+.slidev-layout.lab .lab-card .n{display:inline-flex;width:56px;height:56px;border-radius:50%;background:var(--action);color:#000;font-size:30px;font-weight:700;line-height:56px;justify-content:center}
+.slidev-layout.lab .lab-card h3{font-size:44px;margin:26px 0 12px;font-weight:700}
+.slidev-layout.lab .lab-card p{font-size:30px;color:var(--ink-2);margin:0;line-height:1.4}
+.slidev-layout.lab .lab-row{display:flex;align-items:center;gap:60px;margin-top:40px}
+.slidev-layout.lab .lab-chips{display:flex;flex-direction:column;gap:22px}
+.slidev-layout.lab .lab-chip{font-size:56px;font-weight:800;padding:16px 44px;border-radius:999px;background:var(--card)}
+.slidev-layout.lab .lab-chip.c{color:var(--warn)}
+.slidev-layout.lab .lab-t{font:600 30px "Pretendard Variable",Pretendard,sans-serif;fill:var(--ink)}
+.slidev-layout.lab .lab-svg{display:block;max-width:100%;height:auto;margin:0 auto}
