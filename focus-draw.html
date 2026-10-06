@@ -69,6 +69,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
 /* ── 배치 도구 ── */
 .abs{position:absolute}
+a{color:inherit;text-decoration:none}   /* 장면 안 링크: 클릭해도 다음 장으로 넘어가지 않음 */
 .fullsvg{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:visible}
 .center{text-align:center}
 
@@ -99,8 +100,15 @@ svg [data-s]{transform:none}              /* SVG 안은 이동 없이 페이드�
 .slide.instant,.slide.instant *{transition:none!important}
 
 /* ── 조작 화면(HUD) ── */
-#hud{position:fixed;right:18px;bottom:12px;font:600 15px/1 var(--font);color:#fff;opacity:.35;pointer-events:none;z-index:50}
+#hud{position:fixed;right:132px;bottom:32px;font:600 15px/1 var(--font);color:#fff;opacity:.35;pointer-events:none;z-index:50}
 #bar{position:fixed;left:0;bottom:0;height:3px;background:var(--action-dark);width:0;z-index:50;transition:width .3s var(--ease-out)}
+#nav{position:fixed;right:14px;bottom:14px;display:flex;gap:8px;z-index:65}
+#nav button{width:52px;height:52px;border-radius:50%;background:rgba(60,60,64,.55);display:flex;align-items:center;justify-content:center;
+  opacity:.45;transition:opacity .2s,background .2s}
+#nav button:hover{opacity:1;background:rgba(60,60,64,.9)}
+#nav button:active{background:var(--action-dark)}
+#nav svg{width:26px;height:26px;fill:none;stroke:#fff;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+body.still #nav{display:none}
 #notes{position:fixed;left:0;right:0;bottom:0;max-height:36vh;overflow:auto;padding:22px 32px 30px;background:rgba(20,20,22,.94);color:#f5f5f7;
   font:500 22px/1.55 var(--font);display:none;z-index:60;-webkit-user-select:text;user-select:text}
 #notes.on{display:block}
@@ -330,7 +338,15 @@ body.still *{animation:none!important;transition:none!important}
       buildOverview();
       addEventListener('keydown', keys);
       /* 클릭 = 다음, 오른쪽 클릭 = 이전 */
-      $('#viewport').addEventListener('click', e => { if (!e.target.closest('#notes,#overview,#help')) next(); });
+      $('#viewport').addEventListener('click', e => { if (!e.target.closest('#notes,#overview,#help,a')) next(); });
+      /* 화면 아래 ‹ › 버튼: 키보드 없이 마우스·터치로 넘기기 (포커스를 받지 않아 Space 가 두 번 넘기지 않음) */
+      const nav = document.createElement('div'), chev = d => '<svg viewBox="0 0 24 24"><path d="' + d + '"/></svg>';
+      nav.id = 'nav';
+      nav.innerHTML = '<button tabindex="-1" data-d="-1" aria-label="이전">' + chev('M15 5l-7 7 7 7') + '</button>' +
+        '<button tabindex="-1" data-d="1" aria-label="다음">' + chev('M9 5l7 7-7 7') + '</button>';
+      nav.addEventListener('mousedown', e => e.preventDefault());
+      nav.addEventListener('click', e => { const b = e.target.closest('button'); if (b) (+b.dataset.d < 0 ? prev : next)(); });
+      document.body.appendChild(nav);
       $('#viewport').addEventListener('contextmenu', e => { e.preventDefault(); prev(); });
       /* 전자칠판 좌우 밀기 */
       let tx = 0, ty = 0;
@@ -1034,9 +1050,10 @@ Deck.scene('s10_erase', {
   <div class="abs lead rise" style="left:240px;top:590px;--d:.4s">수업 중 '잠깐' 필요한 기능을<br>'바로' 쓸 수 있게</div>
   <div class="abs rise" style="left:240px;top:800px;font-size:34px;color:var(--on-dark-2);--d:.6s">써 보시고 불편한 점을 알려 주세요.<br>계속 다듬겠습니다. 감사합니다.</div>
   <div class="abs rise" style="left:1100px;top:230px;width:680px;--d:.5s">
+    <a href="https://github.com/maker-SSAM/focus-draw" target="_blank" rel="noopener" style="display:block">
     <div style="width:440px;height:440px;margin:0 auto;border-radius:28px;background:#fff;padding:22px"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMSAzMSIgc2hhcGUtcmVuZGVyaW5nPSJjcmlzcEVkZ2VzIj48cGF0aCBmaWxsPSIjZmZmZmZmIiBkPSJNMCAwaDMxdjMxSDB6Ii8+PHBhdGggc3Ryb2tlPSIjMWQxZDFmIiBkPSJNMSAxLjVoN20zIDBoMW0xIDBoMW0xIDBoMm0yIDBoMm0yIDBoN00xIDIuNWgxbTUgMGgxbTEgMGgxbTMgMGg5bTEgMGgxbTUgMGgxTTEgMy41aDFtMSAwaDNtMSAwaDFtMyAwaDFtMSAwaDFtMSAwaDFtNCAwaDJtMSAwaDFtMSAwaDNtMSAwaDFNMSA0LjVoMW0xIDBoM20xIDBoMW03IDBoMW0zIDBoMW0zIDBoMW0xIDBoM20xIDBoMU0xIDUuNWgxbTEgMGgzbTEgMGgxbTEgMGgxbTEgMGgxbTQgMGgybTIgMGgxbTIgMGgxbTEgMGgzbTEgMGgxTTEgNi41aDFtNSAwaDFtMiAwaDFtMSAwaDJtMiAwaDJtMiAwaDJtMSAwaDFtNSAwaDFNMSA3LjVoN20xIDBoMW0xIDBoMW0xIDBoMW0xIDBoMW0xIDBoMW0xIDBoMW0xIDBoMW0xIDBoN00xMSA4LjVoMm0xIDBoMW0zIDBoMW0xIDBoMU0xIDkuNWgxbTEgMGgxbTEgMGgxbTEgMGgxbTIgMGgxbTMgMGgxbTMgMGgybTEgMGgxbTMgMGgxbTIgMGgxTTEgMTAuNWgxbTEgMGgybTEgMGgxbTIgMGgxbTEgMGgxbTEgMGgybTIgMGgxbTMgMGgxbTEgMGgxbTIgMGgxbTIgMGgxTTQgMTEuNWgxbTIgMGgxbTIgMGgybTEgMGgxbTEgMGgxbTYgMGgybTEgMGgxbTEgMGgzTTIgMTIuNWgybTIgMGgxbTIgMGgxbTEgMGgxbTEgMGg5bTIgMGgybTIgMGgxTTYgMTMuNWg0bTMgMGgybTUgMGg0bTIgMGgxbTEgMGgyTTEgMTQuNWgxbTEgMGg0bTEgMGgzbTIgMGgzbTEgMGgzbTEgMGgzbTIgMGgxbTIgMGgxTTIgMTUuNWgybTEgMGg0bTUgMGgxbTMgMGgybTMgMGgxbTEgMGgybTEgMGgyTTEgMTYuNWgxbTYgMGgybTEgMGgybTEgMGgybTIgMGgybTEgMGgzbTIgMGgxbTEgMGgxTTEgMTcuNWgybTIgMGgzbTcgMGgxbTEgMGgxbTIgMGgybTEgMGgybTEgMGgxbTEgMGgyTTIgMTguNWgybTEgMGgybTEgMGg0bTEgMGgxbTMgMGgzbTIgMGgybTIgMGgybTEgMGgxTTEgMTkuNWgxbTEgMGgybTIgMGgybTMgMGgxbTEgMGgxbTMgMGgybTIgMGgxbTEgMGgybTIgMGgyTTIgMjAuNWgxbTIgMGgxbTUgMGgzbTMgMGgxMG0xIDBoMU0xIDIxLjVoMW0yIDBoNW0xIDBoMW01IDBoMm0yIDBoNk05IDIyLjVoM20xIDBoMm0yIDBoMm0xIDBoMm0zIDBoMW0xIDBoM00xIDIzLjVoN20yIDBoMm0xIDBoMW0xIDBoMW0xIDBoMW0xIDBoM20xIDBoMW0xIDBoMm0xIDBoMk0xIDI0LjVoMW01IDBoMW0yIDBoNm0xIDBoM20xIDBoMW0zIDBoMm0xIDBoMU0xIDI1LjVoMW0xIDBoM20xIDBoMW0xIDBoM20zIDBoMW0xIDBoMW0zIDBoNU0xIDI2LjVoMW0xIDBoM20xIDBoMW0yIDBoMW00IDBoMW0xIDBoMW0zIDBoMW0yIDBoMm0xIDBoM00xIDI3LjVoMW0xIDBoM20xIDBoMW0xIDBoM20xIDBoMm01IDBoMW0zIDBoM20yIDBoMU0xIDI4LjVoMW01IDBoMW01IDBoMW0xIDBoMW0xIDBoNm0yIDBoMW0yIDBoMU0xIDI5LjVoN20xIDBoMW0xIDBoMm0yIDBoOG0xIDBoMm0yIDBoMiIvPjwvc3ZnPgo=" alt="GitHub QR" style="width:100%;height:100%;display:block"></div>
     <div class="center" style="margin-top:34px;font-size:40px;font-weight:700">내려받기 (GitHub)</div>
-    <div class="center" style="margin-top:6px;font-size:30px;color:var(--action-dark);font-weight:600">github.com/maker-SSAM/focus-draw</div>
+    <div class="center" style="margin-top:6px;font-size:30px;color:var(--action-dark);font-weight:600;text-decoration:underline;text-underline-offset:8px">github.com/maker-SSAM/focus-draw</div></a>
     <div class="center" style="margin-top:34px;font-size:30px;color:var(--on-dark-3)">무료 · MIT 라이선스 · 만든 이 maker_SSAM</div></div>
 </section>
 
@@ -1051,6 +1068,7 @@ Deck.scene('s10_erase', {
   <dl>
     <dt>→ · Space · 클릭</dt><dd>다음 (빌드 단계 → 다음 장)</dd>
     <dt>← · 오른쪽 클릭</dt><dd>이전</dd>
+    <dt>‹ › 버튼</dt><dd>화면 오른쪽 아래, 이전 / 다음</dd>
     <dt>R</dt><dd>이 단계 애니메이션 다시 보기</dd>
     <dt>N</dt><dd>발표자 노트(대본)</dd>
     <dt>O</dt><dd>전체 보기(목차)</dd>
