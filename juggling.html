@@ -12,14 +12,13 @@
 /* 레이아웃: 한 화면. 왼쪽 60% 검은 무대(제목·짧은 설명), 오른쪽 40%에 1~4차시 버튼(누르면 그 차시 슬라이드로). 좁은 화면에서는 위아래로.
    색·글꼴은 강의 덱(DESIGN.md)과 같게: 무대는 검정, 행동 파랑 하나, 공 색은 공에만. */
 :root{
+  color-scheme:dark;   /* 한 가지 어두운 모습: 왼쪽 검은 무대, 오른쪽은 덱의 어두운 면(dark) */
   --stage:#000; --on-stage:#f5f5f7; --on-stage-2:#a1a1a6;
-  --bg:#f5f5f7; --card:#fff; --card-hover:#fff; --ink:#1d1d1f; --ink-2:#6e6e73;
-  --action:#0066cc; --action-hi:#2997ff;
+  --bg:#1d1d1f; --card:#2a2a2d; --card-hover:#333337; --ink:#f5f5f7; --ink-2:#a1a1a6; --no:#3a3a3d;
+  --action:#2997ff; --action-hi:#2997ff;
   --ball-a:#FF5C8A; --ball-b:#A78BFA; --ball-c:#FFA64D;
   --font:"Pretendard Variable","Pretendard","IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111113;--card:#1d1d1f;--card-hover:#252528;--ink:#f5f5f7;--ink-2:#a1a1a6;--action:#2997ff;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#111113;--card:#1d1d1f;--card-hover:#252528;--ink:#f5f5f7;--ink-2:#a1a1a6;--action:#2997ff;color-scheme:dark}
 *{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);word-break:keep-all;-webkit-font-smoothing:antialiased}
@@ -41,7 +40,7 @@ h1 b{color:var(--action-hi);font-weight:800}
   border-radius:24px;background:var(--card);color:var(--ink);text-decoration:none;transition:background .15s,transform .15s}
 .lessons a:hover{background:var(--card-hover);transform:translateX(4px)}
 .lessons a:focus-visible{outline:3px solid var(--action);outline-offset:3px}
-.no{display:grid;place-items:center;width:clamp(48px,4.4vw,60px);aspect-ratio:1;border-radius:50%;background:var(--ink);color:var(--bg);font-size:clamp(15px,1.3vw,18px);font-weight:800;line-height:1.1;text-align:center}
+.no{display:grid;place-items:center;width:clamp(48px,4.4vw,60px);aspect-ratio:1;border-radius:50%;background:var(--no);color:var(--ink);font-size:clamp(15px,1.3vw,18px);font-weight:800;line-height:1.1;text-align:center}
 .no small{display:block;font-size:.7em;font-weight:700}
 .t{min-width:0}
 .t strong{display:block;font-size:clamp(19px,1.7vw,24px);font-weight:800;line-height:1.3}
